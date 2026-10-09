@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+*.sql
+*.sql.gz
+*.zip
+*.tar
+*.tar.gz
+wp-config.php
+reference/wordpress/vendor-plugins/
+reference/private/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+{
+  "site": "Boccantina",
+  "source": "https://boccantina.com",
+  "generatedAt": "2026-10-09T20:27:09.091Z",
+  "sitemapPages": 7,
+  "htmlFiles": 11,
+  "savedTopLevelResources": 7,
+  "safety": [
+    "no database",
+    "no credentials",
+    "forms disabled",
+    "dynamic connections blocked"
+  ]
+}

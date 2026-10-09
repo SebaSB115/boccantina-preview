@@ -1,0 +1,14 @@
+{
+  "name": "boccantina-preview",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Snapshot local de maquetado de Boccantina; no despliega a producción.",
+  "scripts": {
+    "mirror": "node scripts/mirror.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "dependencies": {
+    "website-scraper": "6.0.0"
+  }
+}
