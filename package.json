@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Snapshot local de maquetado de Boccantina; no despliega a producción.",
   "scripts": {
-    "mirror": "node scripts/mirror.mjs",
+    "mirror": "node scripts/mirror.mjs && node scripts/fix-menus.mjs",
+    "fix:menus": "node scripts/fix-menus.mjs",
     "serve": "node scripts/serve.mjs"
   },
   "dependencies": {
