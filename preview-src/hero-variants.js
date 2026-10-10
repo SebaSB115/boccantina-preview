@@ -22,7 +22,7 @@
           <h1 id="bocc-hero-a-title">Vino, cocina y una mesa para quedarse.</h1>
           <p class="bocc-hero__intro">Una invitación a descubrir Boccantina entre copas, platos para compartir y una atmósfera hecha para la noche.</p>
           <div class="bocc-hero__actions" aria-label="Acciones principales">
-            <a class="bocc-button bocc-button--primary" href="#menu">Ver el menú</a>
+            <a class="bocc-button bocc-button--primary" href="#bocc-menu-app">Ver el menú interactivo</a>
             <a class="bocc-button bocc-button--ghost" href="/reservaciones/">Reservar mesa</a>
           </div>
         </div>

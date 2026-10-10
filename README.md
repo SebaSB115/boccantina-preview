@@ -17,8 +17,10 @@ Abrir `http://localhost:4174/`.
 - Propuesta B: `http://localhost:4174/?hero=b`
 - Portada original: `http://localhost:4174/`
 
-Las propuestas solo sustituyen los dos sliders superiores cuando se usa el
-parámetro `hero`. El resto de la copia local permanece igual.
+Las propuestas sustituyen los dos sliders superiores únicamente cuando se usa
+el parámetro `hero`. Además, `hero=a` reemplaza la carta estática por un menú
+interactivo local con carrito, ayuda y demostración del panel del mesero.
+`hero=b` y la portada original conservan la carta existente.
 
 Para regenerar el snapshot público:
 
