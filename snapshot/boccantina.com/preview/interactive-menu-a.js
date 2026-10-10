@@ -100,9 +100,57 @@
     }
   };
 
+  const filterCopy = {
+    es: {
+      searchLabel: 'Buscar en toda la carta',
+      searchPlaceholder: 'Ej. pizza, cordero, vegetariano…',
+      clearSearch: 'Borrar búsqueda',
+      filterLabel: 'Filtros rápidos',
+      foodFilter: 'Filtrar por comidas',
+      allFoods: 'Todas las comidas',
+      clearFoodFilter: 'Quitar filtro de comidas',
+      foodFilterDescription: 'Platos de las categorías gastronómicas del menú.',
+      all: 'Todos',
+      recommended: 'Recomendados',
+      share: 'Para compartir',
+      vegetarian: 'Vegetarianos',
+      spicy: 'Picantes',
+      resultsTitle: 'Resultados de búsqueda',
+      resultsDescription: 'Coincidencias en todas las categorías del menú.',
+      filteredDescription: 'Selección disponible en toda la carta.',
+      noResults: 'No encontramos platos con esos filtros.',
+      noResultsHelp: 'Prueba con otro nombre, ingrediente o elimina los filtros activos.',
+      clearFilters: 'Limpiar búsqueda y filtros'
+    },
+    en: {
+      searchLabel: 'Search the full menu',
+      searchPlaceholder: 'Try pizza, lamb, vegetarian…',
+      clearSearch: 'Clear search',
+      filterLabel: 'Quick filters',
+      foodFilter: 'Filter by food',
+      allFoods: 'All food',
+      clearFoodFilter: 'Remove food filter',
+      foodFilterDescription: 'Dishes from every food category on the menu.',
+      all: 'All',
+      recommended: 'Recommended',
+      share: 'To share',
+      vegetarian: 'Vegetarian',
+      spicy: 'Spicy',
+      resultsTitle: 'Search results',
+      resultsDescription: 'Matches across every menu category.',
+      filteredDescription: 'Available selections from the full menu.',
+      noResults: 'No menu items match those filters.',
+      noResultsHelp: 'Try another name or ingredient, or remove the active filters.',
+      clearFilters: 'Clear search and filters'
+    }
+  };
+
   const state = {
     lang: 'es',
     category: 'entradas',
+    query: '',
+    filter: 'all',
+    foodCategory: null,
     cart: new Map(),
     order: null,
     requests: [],
@@ -134,11 +182,30 @@
     </div>
     <div class="bocc-menu-app__content">
       <section class="bocc-order-progress" data-region="order-progress" hidden></section>
+      <section class="bocc-menu-tools" aria-labelledby="bocc-menu-search-label">
+        <div class="bocc-menu-search">
+          <label id="bocc-menu-search-label" for="bocc-menu-search" data-region="search-label"></label>
+          <div class="bocc-menu-search__field">
+            <svg class="bocc-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+            <input id="bocc-menu-search" type="search" data-field="menu-search" autocomplete="off" enterkeyhint="search" aria-controls="bocc-menu-products">
+            <button type="button" data-action="clear-search" data-region="clear-search" hidden>
+              <svg class="bocc-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="bocc-menu-filters">
+          <span data-region="filter-label"></span>
+          <div class="bocc-menu-filter-row">
+            <div data-region="food-filter"></div>
+            <div class="bocc-menu-filters__list" data-region="filters" role="group"></div>
+          </div>
+        </div>
+      </section>
       <header class="bocc-menu-app__section-heading">
         <div><h3 data-region="category-title"></h3><p data-region="category-description"></p></div>
-        <span data-region="category-count"></span>
+        <span data-region="category-count" role="status" aria-live="polite" aria-atomic="true"></span>
       </header>
-      <div class="bocc-product-grid" data-region="products"></div>
+      <div class="bocc-product-grid" id="bocc-menu-products" data-region="products"></div>
     </div>
     <p class="bocc-demo-note" data-copy="demoLabel"></p>
     <button class="bocc-help-fab" type="button" data-action="open-help"><span aria-hidden="true">?</span><span data-copy="help"></span></button>
@@ -178,6 +245,7 @@
   const region = (name) => app.querySelector(`[data-region="${name}"]`);
   const dialog = (name) => app.querySelector(`[data-dialog="${name}"]`);
   const t = () => copy[state.lang];
+  const ft = () => filterCopy[state.lang];
   const productById = (id) => products.find((product) => product.id === id);
   const categoryById = (id) => categories.find((category) => category.id === id);
   const productName = (product) => state.lang === 'es' ? product.nameEs : product.nameEn;
@@ -186,6 +254,12 @@
   const categoryDescription = (category) => category[state.lang === 'es' ? 'esDescription' : 'enDescription'];
   const formatPrice = (price) => price === null ? t().unavailable : `₡${price.toLocaleString('en-US')}`;
   const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
+  const normalizeSearch = (value = '') => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const foodCategoryIds = ['entradas', 'burgers', 'minis', 'bocas', 'pizzas', 'postres'];
+  const isDiscovering = () => Boolean(state.query.trim()) || state.filter !== 'all' || state.foodCategory !== null;
+  const formatItemCount = (count) => state.lang === 'es'
+    ? `${count} ${count === 1 ? 'producto' : 'productos'}`
+    : `${count} ${count === 1 ? 'item' : 'items'}`;
 
   const icon = (name) => {
     const paths = {
@@ -194,7 +268,8 @@
       plus: '<path d="M12 5v14M5 12h14"/>',
       bag: '<path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/>',
       bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/>',
-      arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>'
+      arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+      search: '<circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/>'
     };
     return `<svg class="bocc-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
   };
@@ -211,21 +286,113 @@
     const languageButton = app.querySelector('[data-action="toggle-language"]');
     languageButton.textContent = state.lang === 'es' ? 'EN' : 'ES';
     languageButton.setAttribute('aria-label', state.lang === 'es' ? 'Cambiar a inglés' : 'Switch to Spanish');
+    region('search-label').textContent = ft().searchLabel;
+    region('filter-label').textContent = ft().filterLabel;
+  }
+
+  function renderSearchControls() {
+    const input = app.querySelector('[data-field="menu-search"]');
+    if (input.value !== state.query) input.value = state.query;
+    input.placeholder = ft().searchPlaceholder;
+    const clearButton = region('clear-search');
+    clearButton.hidden = !state.query;
+    clearButton.setAttribute('aria-label', ft().clearSearch);
+    region('filters').setAttribute('aria-label', ft().filterLabel);
+  }
+
+  function renderFilters() {
+    const filters = ['all', 'recommended', 'share', 'vegetarian', 'spicy'];
+    region('filters').innerHTML = filters.map((filter) => `
+      <button type="button" data-action="select-filter" data-filter="${filter}" aria-pressed="${state.filter === filter}" aria-controls="bocc-menu-products">${escapeHtml(ft()[filter])}</button>`).join('');
+  }
+
+  function renderFoodFilter() {
+    const activeCategory = state.foodCategory && state.foodCategory !== 'all-food' ? categoryById(state.foodCategory) : null;
+    const activeLabel = state.foodCategory === 'all-food'
+      ? ft().allFoods
+      : activeCategory
+        ? categoryName(activeCategory)
+        : ft().foodFilter;
+    region('food-filter').innerHTML = `
+      <details class="bocc-food-filter">
+        <summary aria-controls="bocc-food-filter-options" aria-label="${escapeHtml(state.foodCategory ? `${ft().foodFilter}: ${activeLabel}` : ft().foodFilter)}">
+          <span>${escapeHtml(activeLabel)}</span>
+          <svg class="bocc-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m7 9 5 5 5-5"></path></svg>
+        </summary>
+        <div class="bocc-food-filter__menu" id="bocc-food-filter-options" role="group" aria-label="${escapeHtml(ft().foodFilter)}">
+          <button type="button" data-action="select-food-category" data-food-category="all-food" aria-pressed="${state.foodCategory === 'all-food'}">${escapeHtml(ft().allFoods)}</button>
+          ${foodCategoryIds.map((categoryId) => {
+            const category = categoryById(categoryId);
+            return `<button type="button" data-action="select-food-category" data-food-category="${categoryId}" aria-pressed="${state.foodCategory === categoryId}">${escapeHtml(categoryName(category))}</button>`;
+          }).join('')}
+          ${state.foodCategory ? `<button type="button" class="bocc-food-filter__reset" data-action="clear-food-filter">${escapeHtml(ft().clearFoodFilter)}</button>` : ''}
+        </div>
+      </details>`;
   }
 
   function renderCategories() {
     region('categories').innerHTML = categories.map((category) => `
-      <button type="button" data-action="select-category" data-category="${category.id}" aria-pressed="${state.category === category.id}">${escapeHtml(categoryName(category))}</button>`).join('');
+      <button type="button" data-action="select-category" data-category="${category.id}" aria-pressed="${!isDiscovering() && state.category === category.id}">${escapeHtml(categoryName(category))}</button>`).join('');
   }
 
   function renderProducts() {
     const category = categoryById(state.category);
-    const visible = products.filter((product) => product.category === state.category);
-    region('category-title').textContent = categoryName(category);
-    region('category-description').textContent = categoryDescription(category);
-    region('category-count').textContent = `${visible.length} ${t().itemCount}`;
+    const query = normalizeSearch(state.query);
+    const source = state.foodCategory === 'all-food'
+      ? products.filter((product) => foodCategoryIds.includes(product.category))
+      : state.foodCategory
+        ? products.filter((product) => product.category === state.foodCategory)
+        : isDiscovering()
+          ? products
+          : products.filter((product) => product.category === state.category);
+    const visible = source.filter((product) => {
+      const matchesFilter = state.filter === 'all' || product.tags.includes(state.filter);
+      const productCategory = categoryById(product.category);
+      const searchable = normalizeSearch([
+        product.nameEs,
+        product.nameEn,
+        product.descEs,
+        product.descEn,
+        productCategory?.es,
+        productCategory?.en,
+        ...product.tags.map((tag) => `${tagLabels.es[tag] || ''} ${tagLabels.en[tag] || ''}`)
+      ].join(' '));
+      return matchesFilter && (!query || searchable.includes(query));
+    });
+
+    if (isDiscovering()) {
+      const selectedFoodCategory = state.foodCategory && state.foodCategory !== 'all-food' ? categoryById(state.foodCategory) : null;
+      region('category-title').textContent = state.query.trim()
+        ? ft().resultsTitle
+        : state.foodCategory === 'all-food'
+          ? ft().allFoods
+          : selectedFoodCategory
+            ? categoryName(selectedFoodCategory)
+            : ft()[state.filter];
+      region('category-description').textContent = state.query.trim()
+        ? ft().resultsDescription
+        : selectedFoodCategory
+          ? categoryDescription(selectedFoodCategory)
+          : state.foodCategory === 'all-food'
+            ? ft().foodFilterDescription
+            : ft().filteredDescription;
+    } else {
+      region('category-title').textContent = categoryName(category);
+      region('category-description').textContent = categoryDescription(category);
+    }
+    region('category-count').textContent = formatItemCount(visible.length);
 
     if (!visible.length) {
+      if (isDiscovering()) {
+        region('products').innerHTML = `
+          <div class="bocc-empty-state">
+            ${icon('search')}
+            <h4>${escapeHtml(ft().noResults)}</h4>
+            <p>${escapeHtml(ft().noResultsHelp)}</p>
+            <button type="button" class="bocc-text-button" data-action="reset-discovery">${escapeHtml(ft().clearFilters)} ${icon('arrow')}</button>
+          </div>`;
+        return;
+      }
       region('products').innerHTML = `
         <div class="bocc-empty-state">
           ${icon('bell')}
@@ -248,6 +415,7 @@
             <span>${String(index + 1).padStart(2, '0')}</span>
           </button>
           <div class="bocc-product-card__body">
+            ${isDiscovering() ? `<span class="bocc-product-card__category">${escapeHtml(categoryName(categoryById(product.category)))}</span>` : ''}
             <div class="bocc-product-card__title-row"><h4>${escapeHtml(productName(product))}</h4><strong>${escapeHtml(formatPrice(product.price))}</strong></div>
             <p>${escapeHtml(productDescription(product))}</p>
             ${product.tags.length ? `<div class="bocc-product-tags">${product.tags.map((tag) => `<span>${escapeHtml(tagLabels[state.lang][tag])}</span>`).join('')}</div>` : ''}
@@ -296,6 +464,9 @@
 
   function renderAll() {
     applyStaticCopy();
+    renderSearchControls();
+    renderFilters();
+    renderFoodFilter();
     renderCategories();
     renderProducts();
     renderCartBar();
@@ -472,9 +643,50 @@
       renderAll();
     } else if (action === 'select-category') {
       state.category = button.dataset.category;
+      state.query = '';
+      state.filter = 'all';
+      state.foodCategory = null;
+      renderSearchControls();
+      renderFilters();
+      renderFoodFilter();
       renderCategories();
       renderProducts();
       app.querySelector('.bocc-menu-app__section-heading').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    } else if (action === 'select-filter') {
+      state.filter = button.dataset.filter;
+      renderFilters();
+      renderCategories();
+      renderProducts();
+    } else if (action === 'select-food-category') {
+      state.foodCategory = button.dataset.foodCategory;
+      if (state.foodCategory !== 'all-food') state.category = state.foodCategory;
+      button.closest('details')?.removeAttribute('open');
+      renderFoodFilter();
+      renderCategories();
+      renderProducts();
+      app.querySelector('.bocc-menu-app__section-heading').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    } else if (action === 'clear-food-filter') {
+      state.foodCategory = null;
+      button.closest('details')?.removeAttribute('open');
+      renderFoodFilter();
+      renderCategories();
+      renderProducts();
+    } else if (action === 'clear-search') {
+      state.query = '';
+      renderSearchControls();
+      renderCategories();
+      renderProducts();
+      app.querySelector('[data-field="menu-search"]').focus();
+    } else if (action === 'reset-discovery') {
+      state.query = '';
+      state.filter = 'all';
+      state.foodCategory = null;
+      renderSearchControls();
+      renderFilters();
+      renderFoodFilter();
+      renderCategories();
+      renderProducts();
+      app.querySelector('[data-field="menu-search"]').focus();
     } else if (action === 'add-product') {
       addProduct(productId);
     } else if (action === 'open-product') {
@@ -550,6 +762,28 @@
 
   app.addEventListener('input', (event) => {
     if (event.target.matches('[data-field="cart-note"]')) state.cartNote = event.target.value;
+    if (event.target.matches('[data-field="menu-search"]')) {
+      state.query = event.target.value;
+      renderSearchControls();
+      renderCategories();
+      renderProducts();
+    }
+  });
+
+  app.addEventListener('keydown', (event) => {
+    const openFoodFilter = app.querySelector('.bocc-food-filter[open]');
+    if (event.key === 'Escape' && openFoodFilter) {
+      openFoodFilter.removeAttribute('open');
+      openFoodFilter.querySelector('summary')?.focus();
+      event.preventDefault();
+      return;
+    }
+    if (event.key === 'Escape' && event.target.matches('[data-field="menu-search"]') && state.query) {
+      state.query = '';
+      renderSearchControls();
+      renderCategories();
+      renderProducts();
+    }
   });
 
   app.querySelectorAll('dialog').forEach((target) => {
