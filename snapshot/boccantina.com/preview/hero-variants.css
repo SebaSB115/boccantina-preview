@@ -1,0 +1,416 @@
+:root {
+  --bocc-ink: #090a0d;
+  --bocc-ink-soft: #15171c;
+  --bocc-ivory: #f6f0e7;
+  --bocc-gold: #e4b23e;
+  --bocc-gold-deep: #b37b17;
+  --bocc-wine: #401821;
+  --bocc-border-light: rgba(246, 240, 231, 0.45);
+  --bocc-focus: #fff2bb;
+}
+
+body[data-boccantina-hero] .bocc-original-hero {
+  display: none !important;
+}
+
+body[data-boccantina-hero] #menu {
+  scroll-margin-top: 96px;
+}
+
+.bocc-hero,
+.bocc-hero * {
+  box-sizing: border-box;
+}
+
+.bocc-hero {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: clamp(660px, calc(100svh - 92px), 920px);
+  overflow: hidden;
+  color: var(--bocc-ivory);
+  background: var(--bocc-ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bocc-hero h1,
+.bocc-hero p {
+  margin: 0;
+}
+
+.bocc-hero h1 {
+  max-width: 12ch;
+  color: var(--bocc-ivory);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(3.6rem, 7.2vw, 8.25rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.bocc-hero__context {
+  max-width: 40rem;
+  color: var(--bocc-gold);
+  font-size: clamp(0.95rem, 1.25vw, 1.2rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.bocc-hero__intro {
+  max-width: 42rem;
+  color: rgba(246, 240, 231, 0.87);
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  line-height: 1.55;
+}
+
+.bocc-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bocc-button {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 24px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none !important;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+  touch-action: manipulation;
+}
+
+.bocc-button:hover {
+  text-decoration: none;
+}
+
+.bocc-button:focus-visible {
+  outline: 3px solid var(--bocc-focus);
+  outline-offset: 4px;
+}
+
+.bocc-button--primary {
+  background: var(--bocc-gold);
+  color: #161109;
+}
+
+.bocc-button--primary:hover {
+  background: #f2ca69;
+  color: #161109;
+}
+
+.bocc-button--ghost {
+  border-color: var(--bocc-border-light);
+  background: rgba(9, 10, 13, 0.2);
+  color: var(--bocc-ivory);
+}
+
+.bocc-button--ghost:hover {
+  border-color: var(--bocc-ivory);
+  background: rgba(246, 240, 231, 0.1);
+  color: #fff;
+}
+
+/* A — una sola escena nocturna, tipografía editorial y composición baja. */
+.bocc-hero--a {
+  display: grid;
+  align-items: stretch;
+  background: #111216;
+}
+
+.bocc-hero--a .bocc-hero__backdrop {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background-image: url("/wp-content/uploads/revslider/o/9/e66f14773e38045d2da5c094a8356f14.webp");
+  background-position: center;
+  background-size: cover;
+  transform: scale(1.015);
+}
+
+.bocc-hero--a::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 8, 10, 0.97) 0%, rgba(8, 8, 10, 0.76) 44%, rgba(8, 8, 10, 0.22) 75%),
+    linear-gradient(0deg, rgba(8, 8, 10, 0.8) 0%, transparent 48%);
+  content: "";
+}
+
+.bocc-hero--a .bocc-hero__frame {
+  display: grid;
+  width: min(100%, 1600px);
+  min-height: inherit;
+  margin: 0 auto;
+  padding: clamp(56px, 7vw, 112px) clamp(24px, 7vw, 112px) clamp(48px, 6vw, 88px);
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 48px;
+}
+
+.bocc-hero--a .bocc-hero__content {
+  display: grid;
+  max-width: 860px;
+  gap: clamp(22px, 3vw, 36px);
+}
+
+.bocc-hero--a .bocc-hero__signature {
+  display: grid;
+  align-self: start;
+  gap: 5px;
+  padding-top: 8px;
+  border-top: 1px solid var(--bocc-gold);
+  text-align: right;
+}
+
+.bocc-hero--a .bocc-hero__signature span {
+  color: rgba(246, 240, 231, 0.72);
+  font-size: 0.8rem;
+}
+
+.bocc-hero--a .bocc-hero__signature strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.12rem;
+  font-weight: 400;
+}
+
+/* B — arquitectura del lugar y detalles de carta en una composición editorial. */
+.bocc-hero--b {
+  padding: clamp(24px, 3vw, 48px);
+  background:
+    radial-gradient(circle at 15% 85%, rgba(64, 24, 33, 0.9), transparent 38%),
+    var(--bocc-ink);
+}
+
+.bocc-hero-b__grid {
+  display: grid;
+  width: min(100%, 1560px);
+  min-height: calc(clamp(660px, calc(100svh - 92px), 920px) - clamp(48px, 6vw, 96px));
+  margin: 0 auto;
+  grid-template-columns: minmax(360px, 0.8fr) minmax(520px, 1.2fr);
+  gap: clamp(36px, 6vw, 96px);
+}
+
+.bocc-hero-b__copy {
+  display: flex;
+  padding: clamp(32px, 4vw, 72px) 0 10px clamp(8px, 2vw, 28px);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(22px, 3vw, 34px);
+}
+
+.bocc-hero--b h1 {
+  max-width: 100%;
+  font-size: clamp(4rem, 4.8vw, 5.8rem);
+}
+
+.bocc-hero-b__variant {
+  margin-top: auto !important;
+  color: rgba(246, 240, 231, 0.58);
+  font-size: 0.8rem;
+}
+
+.bocc-button--gold {
+  background: var(--bocc-gold);
+  color: #161109;
+}
+
+.bocc-button--gold:hover {
+  background: #f3cc70;
+  color: #161109;
+}
+
+.bocc-button--line {
+  border-color: rgba(228, 178, 62, 0.72);
+  color: var(--bocc-ivory);
+}
+
+.bocc-button--line:hover {
+  border-color: var(--bocc-gold);
+  background: rgba(228, 178, 62, 0.1);
+  color: #fff;
+}
+
+.bocc-hero-b__visual {
+  position: relative;
+  min-height: 620px;
+  overflow: hidden;
+  background: var(--bocc-ink-soft);
+}
+
+.bocc-hero-b__main {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+  filter: saturate(0.78) contrast(1.06) brightness(0.8);
+}
+
+.bocc-hero-b__visual::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(228, 178, 62, 0.35);
+  box-shadow: inset 0 0 0 16px rgba(9, 10, 13, 0.18);
+  content: "";
+  pointer-events: none;
+}
+
+.bocc-hero-b__detail {
+  position: absolute;
+  z-index: 2;
+  width: clamp(142px, 15vw, 230px);
+  aspect-ratio: 1;
+  margin: 0;
+  overflow: hidden;
+  border: 8px solid var(--bocc-ivory);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+}
+
+.bocc-hero-b__detail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bocc-hero-b__detail--drink {
+  top: 8%;
+  left: -7%;
+  transform: rotate(-3deg);
+}
+
+.bocc-hero-b__detail--food {
+  right: 5%;
+  bottom: 5%;
+  transform: rotate(2deg);
+}
+
+@keyframes bocc-hero-enter {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bocc-hero__content,
+.bocc-hero-b__copy,
+.bocc-hero-b__visual {
+  animation: bocc-hero-enter 520ms ease-out both;
+}
+
+.bocc-hero-b__visual {
+  animation-delay: 90ms;
+}
+
+@media (max-width: 900px) {
+  .bocc-hero {
+    min-height: 720px;
+  }
+
+  .bocc-hero--a .bocc-hero__frame {
+    grid-template-columns: 1fr;
+  }
+
+  .bocc-hero--a .bocc-hero__signature {
+    display: none;
+  }
+
+  .bocc-hero--a::after {
+    background: linear-gradient(0deg, rgba(8, 8, 10, 0.96) 0%, rgba(8, 8, 10, 0.56) 72%, rgba(8, 8, 10, 0.22) 100%);
+  }
+
+  .bocc-hero-b__grid {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .bocc-hero-b__copy {
+    min-height: 480px;
+    padding: 36px 8px 0;
+  }
+
+  .bocc-hero-b__variant {
+    margin-top: 10px !important;
+  }
+
+  .bocc-hero-b__visual {
+    min-height: 580px;
+  }
+
+  .bocc-hero--b h1 {
+    max-width: 10ch;
+  }
+}
+
+@media (max-width: 560px) {
+  .bocc-hero {
+    min-height: calc(100svh - 70px);
+  }
+
+  .bocc-hero h1,
+  .bocc-hero--b h1 {
+    max-width: 10ch;
+    font-size: clamp(3rem, 15vw, 4.85rem);
+    line-height: 0.94;
+  }
+
+  .bocc-hero__intro {
+    font-size: 1rem;
+  }
+
+  .bocc-hero__actions {
+    width: 100%;
+  }
+
+  .bocc-button {
+    width: 100%;
+  }
+
+  .bocc-hero--a .bocc-hero__frame {
+    padding: 46px 20px 34px;
+  }
+
+  .bocc-hero--a .bocc-hero__backdrop {
+    background-position: 62% center;
+  }
+
+  .bocc-hero--b {
+    padding: 20px;
+  }
+
+  .bocc-hero-b__copy {
+    min-height: 540px;
+    padding: 28px 0 0;
+  }
+
+  .bocc-hero-b__visual {
+    min-height: 470px;
+  }
+
+  .bocc-hero-b__detail {
+    width: 128px;
+    border-width: 6px;
+  }
+
+  .bocc-hero-b__detail--drink {
+    left: 5%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bocc-hero__content,
+  .bocc-hero-b__copy,
+  .bocc-hero-b__visual {
+    animation: none;
+  }
+
+  .bocc-button {
+    transition: none;
+  }
+}

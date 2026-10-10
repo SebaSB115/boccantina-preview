@@ -11,6 +11,15 @@ npm.cmd run serve
 
 Abrir `http://localhost:4174/`.
 
+## Variantes de hero para revisión
+
+- Propuesta A: `http://localhost:4174/?hero=a`
+- Propuesta B: `http://localhost:4174/?hero=b`
+- Portada original: `http://localhost:4174/`
+
+Las propuestas solo sustituyen los dos sliders superiores cuando se usa el
+parámetro `hero`. El resto de la copia local permanece igual.
+
 Para regenerar el snapshot público:
 
 ```powershell
