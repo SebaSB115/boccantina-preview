@@ -6,6 +6,7 @@
   if (!page || page.querySelector('.bocc-hero')) return;
 
   [...page.children].slice(0, 2).forEach((element) => element.classList.add('bocc-original-hero'));
+  document.documentElement.dataset.boccantinaHero = variant;
   document.body.dataset.boccantinaHero = variant;
   document.title = `Propuesta ${variant.toUpperCase()} — Boccantina`;
 

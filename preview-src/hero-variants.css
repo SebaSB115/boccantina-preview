@@ -414,3 +414,6 @@ body[data-boccantina-hero] #menu {
     transition: none;
   }
 }
+html[data-boccantina-hero] {
+  overflow-x: clip;
+}
