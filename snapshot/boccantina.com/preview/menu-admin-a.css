@@ -1,0 +1,689 @@
+body[data-boccantina-admin="extras"] {
+  --admin-wine: #5a1c2f;
+  --admin-wine-deep: #241019;
+  --admin-gold: #d6ac63;
+  --admin-gold-light: #f0d49a;
+  --admin-ink: #111014;
+  --admin-surface: #19161c;
+  --admin-raised: #231e25;
+  --admin-text: #f5eee4;
+  --admin-muted: #c8bcad;
+  --admin-border: rgba(214, 172, 99, 0.28);
+  --admin-soft-border: rgba(245, 238, 228, 0.13);
+  --admin-success: #bad99f;
+  --admin-danger: #ffb0a8;
+  min-width: 320px;
+  margin: 0;
+  background: var(--admin-ink);
+  color: var(--admin-text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body[data-boccantina-admin="extras"] *,
+body[data-boccantina-admin="extras"] *::before,
+body[data-boccantina-admin="extras"] *::after {
+  box-sizing: border-box;
+}
+
+body[data-boccantina-admin="extras"] button,
+body[data-boccantina-admin="extras"] input,
+body[data-boccantina-admin="extras"] a {
+  font: inherit;
+}
+
+body[data-boccantina-admin="extras"] button,
+body[data-boccantina-admin="extras"] a,
+body[data-boccantina-admin="extras"] label {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body[data-boccantina-admin="extras"] button,
+body[data-boccantina-admin="extras"] a {
+  touch-action: manipulation;
+}
+
+body[data-boccantina-admin="extras"] :focus-visible {
+  outline: 3px solid #fff0be;
+  outline-offset: 3px;
+}
+
+.bocc-admin-skip {
+  position: fixed;
+  z-index: 100;
+  top: 12px;
+  left: 12px;
+  padding: 12px 16px;
+  background: var(--admin-gold);
+  color: #1b1006;
+  font-weight: 800;
+  transform: translateY(-160%);
+}
+
+.bocc-admin-skip:focus {
+  transform: translateY(0);
+}
+
+.bocc-admin-shell {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(90, 28, 47, 0.2), transparent 34rem),
+    var(--admin-ink);
+}
+
+.bocc-admin-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  min-height: 80px;
+  padding: 14px clamp(20px, 4vw, 56px);
+  border-bottom: 1px solid var(--admin-border);
+  background: rgba(17, 16, 20, 0.96);
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  backdrop-filter: blur(12px);
+}
+
+.bocc-admin-brand,
+.bocc-admin-header__actions,
+.bocc-admin-header__actions a,
+.bocc-admin-toggle,
+.bocc-admin-extras-head,
+.bocc-admin-extras-head button,
+.bocc-admin-editor-card__footer button,
+.bocc-admin-remove {
+  display: flex;
+  align-items: center;
+}
+
+.bocc-admin-brand {
+  gap: 12px;
+}
+
+.bocc-admin-brand > span {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--admin-gold);
+  border-radius: 50%;
+  color: var(--admin-gold-light);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.45rem;
+  place-items: center;
+}
+
+.bocc-admin-brand > div {
+  display: grid;
+  gap: 2px;
+}
+
+.bocc-admin-brand strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.bocc-admin-brand small,
+.bocc-admin-sidebar__head span,
+.bocc-admin-editor-card__header span,
+.bocc-admin-extras-head p {
+  color: var(--admin-muted);
+  line-height: 1.45;
+}
+
+.bocc-admin-header__actions {
+  gap: 14px;
+}
+
+.bocc-admin-environment {
+  padding: 7px 10px;
+  border: 1px solid var(--admin-soft-border);
+  color: var(--admin-muted);
+  font-size: 0.75rem;
+}
+
+.bocc-admin-header__actions a {
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--admin-gold);
+  color: var(--admin-gold-light);
+  gap: 9px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.bocc-admin-header__actions svg,
+.bocc-admin-extras-head svg,
+.bocc-admin-editor-card__footer svg,
+.bocc-admin-remove svg,
+.bocc-admin-search svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.bocc-admin-layout {
+  display: grid;
+  min-height: calc(100dvh - 80px);
+  grid-template-columns: minmax(290px, 340px) minmax(0, 1fr);
+}
+
+.bocc-admin-sidebar {
+  padding: 36px 24px 48px;
+  border-right: 1px solid var(--admin-soft-border);
+  background: rgba(25, 22, 28, 0.88);
+}
+
+.bocc-admin-sidebar__head > p,
+.bocc-admin-editor-card__header p {
+  margin: 0 0 8px;
+  color: var(--admin-gold);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bocc-admin-sidebar h1,
+.bocc-admin-editor-card h2,
+.bocc-admin-extra-list h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+.bocc-admin-sidebar h1 {
+  font-size: 2.15rem;
+}
+
+.bocc-admin-sidebar__head > span {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.86rem;
+}
+
+.bocc-admin-search {
+  display: grid;
+  margin: 26px 0 30px;
+  gap: 8px;
+  color: var(--admin-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.bocc-admin-search > div {
+  display: flex;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-soft-border);
+  background: #0e0d10;
+  align-items: center;
+  gap: 9px;
+}
+
+.bocc-admin-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--admin-text);
+  font-size: 1rem;
+}
+
+.bocc-admin-product-group + .bocc-admin-product-group {
+  margin-top: 26px;
+}
+
+.bocc-admin-product-group h2 {
+  margin: 0 0 9px;
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.bocc-admin-product-group button {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--admin-text);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bocc-admin-product-group button:hover,
+.bocc-admin-product-group button[aria-current="page"] {
+  border-color: var(--admin-border);
+  background: rgba(214, 172, 99, 0.08);
+}
+
+.bocc-admin-product-group button > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.bocc-admin-product-group button strong {
+  overflow-wrap: anywhere;
+  font-size: 0.86rem;
+}
+
+.bocc-admin-product-group button small {
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+}
+
+.bocc-admin-product-group button i {
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border: 1px solid var(--admin-soft-border);
+  color: var(--admin-muted);
+  font-size: 0.67rem;
+  font-style: normal;
+}
+
+.bocc-admin-product-group button i.is-active {
+  border-color: rgba(186, 217, 159, 0.4);
+  color: var(--admin-success);
+}
+
+.bocc-admin-main {
+  min-width: 0;
+  padding: 0 clamp(20px, 4vw, 64px) 64px;
+}
+
+.bocc-admin-main__statusbar {
+  display: flex;
+  min-height: 58px;
+  border-bottom: 1px solid var(--admin-soft-border);
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--admin-muted);
+  font-size: 0.8rem;
+}
+
+.bocc-admin-save-status {
+  color: var(--admin-success);
+  font-weight: 700;
+}
+
+.bocc-admin-save-status[data-state="saving"] {
+  color: var(--admin-gold-light);
+}
+
+.bocc-admin-save-status[data-state="error"] {
+  color: var(--admin-danger);
+}
+
+.bocc-admin-editor-card {
+  width: min(100%, 980px);
+  margin: 42px auto 0;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+}
+
+.bocc-admin-editor-card__header {
+  display: flex;
+  padding: clamp(24px, 4vw, 42px);
+  border-bottom: 1px solid var(--admin-soft-border);
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.bocc-admin-editor-card h2 {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+.bocc-admin-editor-card__header span {
+  display: block;
+  margin-top: 9px;
+  font-size: 0.75rem;
+}
+
+.bocc-admin-toggle {
+  min-height: 48px;
+  gap: 11px;
+  cursor: pointer;
+}
+
+.bocc-admin-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.bocc-admin-toggle > span {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  margin: 0;
+  border: 1px solid var(--admin-soft-border);
+  border-radius: 20px;
+  background: #0e0d10;
+}
+
+.bocc-admin-toggle > span::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--admin-muted);
+  content: "";
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.bocc-admin-toggle input:checked + span {
+  border-color: var(--admin-gold);
+  background: rgba(214, 172, 99, 0.17);
+}
+
+.bocc-admin-toggle input:checked + span::after {
+  background: var(--admin-gold);
+  transform: translateX(22px);
+}
+
+.bocc-admin-toggle input:focus-visible + span {
+  outline: 3px solid #fff0be;
+  outline-offset: 3px;
+}
+
+.bocc-admin-toggle b {
+  max-width: 17ch;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.bocc-admin-visibility-note {
+  margin: 28px clamp(24px, 4vw, 42px) 0;
+  padding: 16px 18px;
+  border-left: 3px solid var(--admin-gold);
+  background: rgba(214, 172, 99, 0.08);
+}
+
+.bocc-admin-visibility-note strong {
+  color: var(--admin-gold-light);
+  font-size: 0.8rem;
+}
+
+.bocc-admin-visibility-note p {
+  margin: 4px 0 0;
+  color: var(--admin-muted);
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.bocc-admin-extras-head {
+  padding: 36px clamp(24px, 4vw, 42px) 20px;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.bocc-admin-extras-head h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.55rem;
+  font-weight: 400;
+}
+
+.bocc-admin-extras-head p {
+  max-width: 62ch;
+  margin: 5px 0 0;
+  font-size: 0.8rem;
+}
+
+.bocc-admin-extras-head button,
+.bocc-admin-save {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--admin-gold);
+  background: var(--admin-gold);
+  color: #1b1006;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.bocc-admin-extra-list {
+  display: grid;
+  padding: 0 clamp(24px, 4vw, 42px) 38px;
+  gap: 14px;
+}
+
+.bocc-admin-extra-card {
+  position: relative;
+  margin: 0;
+  padding: 19px;
+  border: 1px solid var(--admin-soft-border);
+  background: var(--admin-raised);
+}
+
+.bocc-admin-extra-card legend {
+  padding: 0 7px;
+  color: var(--admin-gold-light);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.bocc-admin-extra-card__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(170px, 0.62fr);
+  gap: 14px;
+}
+
+.bocc-admin-extra-card label {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: var(--admin-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.bocc-admin-extra-card input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-soft-border);
+  border-radius: 0;
+  outline: 0;
+  background: #0e0d10;
+  color: var(--admin-text);
+  font-size: 1rem;
+}
+
+.bocc-admin-extra-card input:focus {
+  border-color: var(--admin-gold);
+}
+
+.bocc-admin-extra-card label small {
+  color: var(--admin-gold-light);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bocc-admin-remove {
+  min-height: 44px;
+  margin: 12px 0 0 auto;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--admin-danger);
+  gap: 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bocc-admin-editor-card__footer {
+  display: flex;
+  padding: 20px clamp(24px, 4vw, 42px);
+  border-top: 1px solid var(--admin-soft-border);
+  background: rgba(14, 13, 16, 0.55);
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.bocc-admin-reset {
+  min-height: 48px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--admin-muted);
+  gap: 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.bocc-admin-empty,
+.bocc-admin-empty-state {
+  color: var(--admin-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.bocc-admin-empty-state {
+  padding: 36px;
+  border: 1px dashed var(--admin-border);
+  text-align: center;
+}
+
+.bocc-admin-empty-state h3 {
+  color: var(--admin-text);
+  font-size: 1.4rem;
+}
+
+.bocc-admin-empty-state button {
+  min-height: 46px;
+  margin-top: 12px;
+  padding: 0 16px;
+  border: 1px solid var(--admin-gold);
+  background: transparent;
+  color: var(--admin-gold-light);
+  font-weight: 800;
+}
+
+@media (max-width: 980px) {
+  .bocc-admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bocc-admin-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--admin-soft-border);
+  }
+
+  .bocc-admin-sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .bocc-admin-product-group + .bocc-admin-product-group {
+    margin-top: 0;
+  }
+
+  .bocc-admin-extra-card__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .bocc-admin-header,
+  .bocc-admin-editor-card__header,
+  .bocc-admin-extras-head,
+  .bocc-admin-editor-card__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bocc-admin-header {
+    position: static;
+  }
+
+  .bocc-admin-header__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bocc-admin-header__actions a {
+    justify-content: center;
+  }
+
+  .bocc-admin-layout {
+    min-height: 0;
+  }
+
+  .bocc-admin-sidebar {
+    padding: 28px 18px 32px;
+  }
+
+  .bocc-admin-sidebar nav,
+  .bocc-admin-extra-card__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .bocc-admin-main {
+    padding-inline: 14px;
+  }
+
+  .bocc-admin-main__statusbar {
+    padding-block: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .bocc-admin-editor-card {
+    margin-top: 24px;
+  }
+
+  .bocc-admin-editor-card__header,
+  .bocc-admin-visibility-note,
+  .bocc-admin-extras-head,
+  .bocc-admin-extra-list,
+  .bocc-admin-editor-card__footer {
+    margin-inline: 0;
+    padding-inline: 18px;
+  }
+
+  .bocc-admin-toggle b {
+    max-width: none;
+  }
+
+  .bocc-admin-extras-head button,
+  .bocc-admin-save {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-boccantina-admin="extras"] *,
+  body[data-boccantina-admin="extras"] *::before,
+  body[data-boccantina-admin="extras"] *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1089,17 +1089,30 @@ body[data-boccantina-menu="a"] #ast-scroll-top {
 
 .bocc-product-sheet__controls .bocc-extra-option {
   position: relative;
-  display: flex;
+  display: grid;
   min-height: 48px;
   padding: 10px 12px;
   border: 1px solid var(--bocc-menu-border-soft);
   background: #0f0d10;
+  grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   color: var(--bocc-menu-ivory-soft);
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.bocc-extra-option__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bocc-extra-option > strong {
+  color: var(--bocc-menu-gold-light);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  grid-column: 2;
 }
 
 .bocc-product-sheet__controls .bocc-extra-option:hover {
@@ -1333,6 +1346,12 @@ body[data-boccantina-menu="a"] #ast-scroll-top {
   color: var(--bocc-menu-ivory-soft);
   font-size: 0.7rem;
   line-height: 1.25;
+}
+
+.bocc-line-extras li b {
+  color: var(--bocc-menu-gold-light);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .bocc-cart-item__copy > p strong {

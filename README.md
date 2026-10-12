@@ -15,12 +15,19 @@ Abrir `http://localhost:4174/`.
 
 - Propuesta A: `http://localhost:4174/?hero=a`
 - Propuesta B: `http://localhost:4174/?hero=b`
+- Administración local de extras: `http://localhost:4174/?admin=extras`
 - Portada original: `http://localhost:4174/`
 
 Las propuestas sustituyen los dos sliders superiores únicamente cuando se usa
 el parámetro `hero`. Además, `hero=a` reemplaza la carta estática por un menú
 interactivo local con carrito, ayuda y demostración del panel del mesero.
 `hero=b` y la portada original conservan la carta existente.
+
+El panel administrativo de extras es una superficie separada de la carta del
+cliente. En este prototipo guarda la configuración únicamente en el
+`localStorage` del navegador: permite activar o desactivar extras por plato,
+añadirlos, quitarlos y asignar su precio individual. No representa todavía una
+autenticación ni persistencia de producción.
 
 Para regenerar el snapshot público:
 

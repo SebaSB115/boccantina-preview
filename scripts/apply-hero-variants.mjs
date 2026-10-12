@@ -15,25 +15,34 @@ await Promise.all([
   copyFile(join(sourceRoot, 'hero-variants.css'), join(targetRoot, 'hero-variants.css')),
   copyFile(join(sourceRoot, 'hero-variants.js'), join(targetRoot, 'hero-variants.js')),
   copyFile(join(sourceRoot, 'interactive-menu-a.css'), join(targetRoot, 'interactive-menu-a.css')),
-  copyFile(join(sourceRoot, 'interactive-menu-a.js'), join(targetRoot, 'interactive-menu-a.js'))
+  copyFile(join(sourceRoot, 'interactive-menu-a.js'), join(targetRoot, 'interactive-menu-a.js')),
+  copyFile(join(sourceRoot, 'menu-extras-config-a.js'), join(targetRoot, 'menu-extras-config-a.js')),
+  copyFile(join(sourceRoot, 'menu-admin-a.css'), join(targetRoot, 'menu-admin-a.css')),
+  copyFile(join(sourceRoot, 'menu-admin-a.js'), join(targetRoot, 'menu-admin-a.js'))
 ]);
 
 let html = await readFile(homeFile, 'utf8');
 const styleTag = '<link id="bocc-hero-styles" rel="stylesheet" href="/preview/hero-variants.css">';
 const scriptTag = '<script id="bocc-hero-script" src="/preview/hero-variants.js" defer></script>';
 const menuStyleTag = '<link id="bocc-menu-a-styles" rel="stylesheet" href="/preview/interactive-menu-a.css">';
+const adminStyleTag = '<link id="bocc-menu-admin-a-styles" rel="stylesheet" href="/preview/menu-admin-a.css">';
+const extrasConfigScriptTag = '<script id="bocc-menu-extras-config-a-script" src="/preview/menu-extras-config-a.js" defer></script>';
 const menuScriptTag = '<script id="bocc-menu-a-script" src="/preview/interactive-menu-a.js" defer></script>';
+const adminScriptTag = '<script id="bocc-menu-admin-a-script" src="/preview/menu-admin-a.js" defer></script>';
 
 html = html.replace(/\s*<link id="bocc-hero-styles"[^>]*>/i, '');
 html = html.replace(/\s*<script id="bocc-hero-script"[^>]*><\/script>/i, '');
 html = html.replace(/\s*<link id="bocc-menu-a-styles"[^>]*>/i, '');
+html = html.replace(/\s*<link id="bocc-menu-admin-a-styles"[^>]*>/i, '');
+html = html.replace(/\s*<script id="bocc-menu-extras-config-a-script"[^>]*><\/script>/i, '');
 html = html.replace(/\s*<script id="bocc-menu-a-script"[^>]*><\/script>/i, '');
+html = html.replace(/\s*<script id="bocc-menu-admin-a-script"[^>]*><\/script>/i, '');
 html = html.includes('</head>')
-  ? html.replace('</head>', `${styleTag}\n${menuStyleTag}\n</head>`)
-  : `${styleTag}\n${menuStyleTag}\n${html}`;
+  ? html.replace('</head>', `${styleTag}\n${menuStyleTag}\n${adminStyleTag}\n</head>`)
+  : `${styleTag}\n${menuStyleTag}\n${adminStyleTag}\n${html}`;
 html = html.includes('</body>')
-  ? html.replace('</body>', `${scriptTag}\n${menuScriptTag}\n</body>`)
-  : `${html}\n${scriptTag}\n${menuScriptTag}`;
+  ? html.replace('</body>', `${extrasConfigScriptTag}\n${scriptTag}\n${menuScriptTag}\n${adminScriptTag}\n</body>`)
+  : `${html}\n${extrasConfigScriptTag}\n${scriptTag}\n${menuScriptTag}\n${adminScriptTag}`;
 
 await writeFile(homeFile, html, 'utf8');
 console.log('Variantes de hero A/B aplicadas al preview local.');

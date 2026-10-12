@@ -145,44 +145,26 @@
     }
   };
 
-  const extraCatalog = {
-    pizza: [
-      { id: 'extra-mozzarella', es: 'Mozzarella extra', en: 'Extra mozzarella' },
-      { id: 'extra-pepperoni', es: 'Pepperoni extra', en: 'Extra pepperoni' },
-      { id: 'extra-prosciutto', es: 'Prosciutto extra', en: 'Extra prosciutto' },
-      { id: 'extra-bacon', es: 'Tocineta extra', en: 'Extra bacon' },
-      { id: 'extra-mushrooms', es: 'Champiñones', en: 'Mushrooms' },
-      { id: 'extra-jalapenos', es: 'Jalapeños', en: 'Jalapeños' }
-    ],
-    burger: [
-      { id: 'extra-angus-patty', es: 'Torta Angus extra', en: 'Extra Angus patty' },
-      { id: 'extra-cheddar', es: 'Cheddar extra', en: 'Extra cheddar' },
-      { id: 'extra-bacon', es: 'Tocineta extra', en: 'Extra bacon' },
-      { id: 'extra-caramelized-onion', es: 'Cebolla caramelizada', en: 'Caramelized onion' },
-      { id: 'extra-fried-egg', es: 'Huevo frito', en: 'Fried egg' },
-      { id: 'extra-jalapenos', es: 'Jalapeños', en: 'Jalapeños' }
-    ]
-  };
-
   const extraCopy = {
     es: {
       customize: 'Personalizar', customizable: 'Personalizable', pizzaTitle: 'Personaliza tu pizza', burgerTitle: 'Personaliza tu hamburguesa',
       instruction: 'Selecciona uno o más extras. Se enviarán vinculados a este plato.',
-      demoNotice: 'Opciones de demostración · disponibilidad y precios por confirmar.',
+      demoNotice: 'Los extras y precios son configurados por el restaurante.', pendingPrice: 'Precio por confirmar',
       noneSelected: 'Sin extras seleccionados', selectedSingular: '1 extra seleccionado', selectedPlural: 'extras seleccionados',
       addConfigured: 'Agregar configuración al pedido', itemExtras: 'Extras de este plato', preparationNote: 'Otra indicación de preparación',
-      notePlaceholder: 'Ej. sin cebolla', priceNotice: 'Los extras de esta demostración no modifican el total hasta confirmar sus precios.', extrasLabel: 'EXTRAS'
+      notePlaceholder: 'Ej. sin cebolla', priceNotice: 'Los extras con precio pendiente no modifican todavía el total.', extrasLabel: 'EXTRAS'
     },
     en: {
       customize: 'Customize', customizable: 'Customizable', pizzaTitle: 'Customize your pizza', burgerTitle: 'Customize your burger',
       instruction: 'Select one or more extras. They will be sent as part of this item.',
-      demoNotice: 'Demo options · availability and prices to be confirmed.',
+      demoNotice: 'Extras and prices are configured by the restaurant.', pendingPrice: 'Price to be confirmed',
       noneSelected: 'No extras selected', selectedSingular: '1 extra selected', selectedPlural: 'extras selected',
       addConfigured: 'Add configuration to order', itemExtras: 'Extras for this item', preparationNote: 'Other preparation request',
-      notePlaceholder: 'E.g. no onion', priceNotice: 'Demo extras do not change the total until their prices are confirmed.', extrasLabel: 'EXTRAS'
+      notePlaceholder: 'E.g. no onion', priceNotice: 'Extras with a pending price do not yet change the total.', extrasLabel: 'EXTRAS'
     }
   };
 
+  const extraConfigApi = window.BoccMenuExtrasConfig;
   const state = {
     lang: 'es',
     category: 'entradas',
@@ -196,7 +178,8 @@
     selectedHelpProduct: null,
     cartNote: '',
     failedSend: false,
-    nextLineNumber: 1
+    nextLineNumber: 1,
+    extraConfig: extraConfigApi?.load() || { products: {} }
   };
 
   const app = document.createElement('section');
@@ -293,15 +276,15 @@
   const categoryName = (category) => category[state.lang];
   const categoryDescription = (category) => category[state.lang === 'es' ? 'esDescription' : 'enDescription'];
   const formatPrice = (price) => price === null ? t().unavailable : `₡${price.toLocaleString('en-US')}`;
+  const formatExtraPrice = (price) => price === null ? et().pendingPrice : `+₡${Number(price).toLocaleString('en-US')}`;
   const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
   const normalizeSearch = (value = '') => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   const customizationType = (product) => {
-    if (product?.category === 'pizzas') return 'pizza';
-    if (product?.category === 'burgers' || (product?.category === 'minis' && product.id !== 'wings')) return 'burger';
-    return null;
+    const config = state.extraConfig.products[product?.id];
+    return config?.enabled && config.extras.some((extra) => extra.nameEs.trim()) ? config.type : null;
   };
-  const extraOptionsForProduct = (product) => extraCatalog[customizationType(product)] || [];
-  const extraName = (extra) => extra[state.lang];
+  const extraOptionsForProduct = (product) => customizationType(product) ? state.extraConfig.products[product.id].extras.filter((extra) => extra.nameEs.trim()) : [];
+  const extraName = (extra) => state.lang === 'es' ? extra.nameEs : (extra.nameEn || extra.nameEs);
   const foodCategoryIds = ['entradas', 'burgers', 'minis', 'bocas', 'pizzas', 'postres'];
   const isDiscovering = () => Boolean(state.query.trim()) || state.filter !== 'all' || state.foodCategory !== null;
   const formatItemCount = (count) => state.lang === 'es'
@@ -494,7 +477,16 @@
   }
 
   function cartSummary() {
-    return cartItems().reduce((summary, item) => ({ count: summary.count + item.quantity, total: summary.total + item.product.price * item.quantity }), { count: 0, total: 0 });
+    return cartItems().reduce((summary, item) => ({
+      count: summary.count + item.quantity,
+      total: summary.total + lineTotal(item),
+      hasPendingExtraPrice: summary.hasPendingExtraPrice || item.extras.some((extra) => extra.price === null)
+    }), { count: 0, total: 0, hasPendingExtraPrice: false });
+  }
+
+  function lineTotal(item) {
+    const extrasTotal = item.extras.reduce((total, extra) => total + (extra.price ?? 0), 0);
+    return (item.product.price + extrasTotal) * item.quantity;
   }
 
   function renderCartBar() {
@@ -580,11 +572,15 @@
   function updateExtraSummary() {
     const target = dialog('product');
     const checked = [...target.querySelectorAll('[data-field="product-extra"]:checked')];
+    const availableExtras = extraOptionsForProduct(productById(state.selectedProduct));
     const count = target.querySelector('[data-region="extra-count"]');
     const names = target.querySelector('[data-region="extra-names"]');
     if (!count || !names) return;
     count.textContent = checked.length === 0 ? et().noneSelected : checked.length === 1 ? et().selectedSingular : `${checked.length} ${et().selectedPlural}`;
-    names.textContent = checked.map((input) => input.dataset.extraName).join(' · ');
+    names.textContent = checked.map((input) => {
+      const extra = availableExtras.find((item) => item.id === input.value);
+      return extra ? `${extraName(extra)} ${formatExtraPrice(extra.price)}` : input.dataset.extraName;
+    }).join(' · ');
   }
 
   function renderProductDialog(id) {
@@ -610,7 +606,8 @@
                   ${extras.map((extra) => `<label class="bocc-extra-option">
                     <input type="checkbox" value="${extra.id}" data-field="product-extra" data-extra-name="${escapeHtml(extraName(extra))}">
                     <span class="bocc-extra-option__check">${icon('check')}</span>
-                    <span>${escapeHtml(extraName(extra))}</span>
+                    <span class="bocc-extra-option__name">${escapeHtml(extraName(extra))}</span>
+                    <strong>${escapeHtml(formatExtraPrice(extra.price))}</strong>
                   </label>`).join('')}
                 </div>
                 <div class="bocc-extra-summary" aria-live="polite" aria-atomic="true"><strong data-region="extra-count">${escapeHtml(et().noneSelected)}</strong><span data-region="extra-names"></span></div>
@@ -636,8 +633,8 @@
           ${items.length ? items.map(({ lineId, product, quantity, note, extras }) => `
             <article class="bocc-cart-item">
               <img src="${product.image}" alt="" width="112" height="112">
-              <div class="bocc-cart-item__copy"><h4>${escapeHtml(productName(product))}</h4><span>${formatPrice(product.price * quantity)}</span>
-                ${extras.length ? `<div class="bocc-line-extras"><strong>${escapeHtml(et().itemExtras)}</strong><ul>${extras.map((extra) => `<li>${escapeHtml(extraName(extra))}</li>`).join('')}</ul></div>` : ''}
+              <div class="bocc-cart-item__copy"><h4>${escapeHtml(productName(product))}</h4><span>${formatPrice(lineTotal({ product, quantity, extras }))}</span>
+                ${extras.length ? `<div class="bocc-line-extras"><strong>${escapeHtml(et().itemExtras)}</strong><ul>${extras.map((extra) => `<li>${escapeHtml(extraName(extra))} <b>${escapeHtml(formatExtraPrice(extra.price))}</b></li>`).join('')}</ul></div>` : ''}
                 ${note ? `<p><strong>${escapeHtml(et().preparationNote)}:</strong> ${escapeHtml(note)}</p>` : ''}
               </div>
               <div class="bocc-quantity" aria-label="${escapeHtml(`${state.lang === 'es' ? 'Cantidad' : 'Quantity'}: ${productName(product)}`)}">
@@ -651,7 +648,7 @@
         ${items.length ? `
           <label class="bocc-cart-note">${state.lang === 'es' ? 'Instrucciones para el pedido' : 'Order instructions'}<textarea rows="3" data-field="cart-note" placeholder="${state.lang === 'es' ? 'Ej. servir bebidas primero' : 'E.g. serve drinks first'}">${escapeHtml(state.cartNote)}</textarea></label>
           <div class="bocc-cart-sheet__total"><span>${t().estimated}</span><strong>${formatPrice(summary.total)}</strong></div>
-          ${items.some((item) => item.extras.length) ? `<p class="bocc-cart-sheet__price-notice">${escapeHtml(et().priceNotice)}</p>` : ''}
+          ${summary.hasPendingExtraPrice ? `<p class="bocc-cart-sheet__price-notice">${escapeHtml(et().priceNotice)}</p>` : ''}
           <div class="bocc-cart-error" data-region="send-error" ${state.failedSend ? '' : 'hidden'} role="alert"><strong>${state.lang === 'es' ? 'No se pudo enviar la demostración.' : 'The demo order could not be sent.'}</strong><span>${state.lang === 'es' ? 'El pedido se conserva. Reintenta cuando quieras.' : 'Your order is safe. Try again whenever you are ready.'}</span></div>
           <button class="bocc-primary-button" type="button" data-action="send-order">${state.lang === 'es' ? 'Enviar pedido' : 'Send order'} ${icon('arrow')}</button>
           <button class="bocc-simulate-button" type="button" data-action="simulate-error">${state.lang === 'es' ? 'Ver estado de error simulado' : 'Preview simulated error state'}</button>` : ''}
@@ -707,7 +704,7 @@
           <section><div class="bocc-waiter-column__head"><h4>${state.lang === 'es' ? 'Pedidos' : 'Orders'}</h4><span>${order ? 1 : 0}</span></div>
             ${order ? `<article class="bocc-waiter-order">
               <div class="bocc-waiter-order__head"><div><span>${t().table} · ${order.number}</span><strong>${statusLabels[order.status]}</strong></div><time>${state.lang === 'es' ? 'Ahora' : 'Now'}</time></div>
-              <ul>${order.items.map((item) => `<li><span>${item.quantity} × ${escapeHtml(productName(item.product))}</span><strong>${formatPrice(item.product.price * item.quantity)}</strong>${item.extras.length ? `<small class="bocc-waiter-order__extras"><b>${escapeHtml(et().extrasLabel)}:</b> ${item.extras.map((extra) => escapeHtml(extraName(extra))).join(' · ')}</small>` : ''}${item.note ? `<small class="bocc-waiter-order__prep"><b>${escapeHtml(et().preparationNote)}:</b> ${escapeHtml(item.note)}</small>` : ''}</li>`).join('')}</ul>
+              <ul>${order.items.map((item) => `<li><span>${item.quantity} × ${escapeHtml(productName(item.product))}</span><strong>${formatPrice(lineTotal(item))}</strong>${item.extras.length ? `<small class="bocc-waiter-order__extras"><b>${escapeHtml(et().extrasLabel)}:</b> ${item.extras.map((extra) => `${escapeHtml(extraName(extra))} (${escapeHtml(formatExtraPrice(extra.price))})`).join(' · ')}</small>` : ''}${item.note ? `<small class="bocc-waiter-order__prep"><b>${escapeHtml(et().preparationNote)}:</b> ${escapeHtml(item.note)}</small>` : ''}</li>`).join('')}</ul>
               ${order.note ? `<p class="bocc-waiter-order__note"><strong>${state.lang === 'es' ? 'Nota' : 'Note'}:</strong> ${escapeHtml(order.note)}</p>` : ''}
               <div class="bocc-waiter-order__actions">${[
                 ['accepted', state.lang === 'es' ? 'Aceptar' : 'Accept'],
@@ -901,6 +898,14 @@
     target.addEventListener('click', (event) => {
       if (event.target === target) closeDialog(target);
     });
+  });
+
+  window.addEventListener('storage', (event) => {
+    if (!extraConfigApi || event.key !== extraConfigApi.storageKey) return;
+    state.extraConfig = extraConfigApi.load();
+    renderProducts();
+    renderCartBar();
+    if (dialog('cart').open) renderCartDialog();
   });
 
   renderAll();
