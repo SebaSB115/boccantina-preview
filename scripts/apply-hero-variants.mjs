@@ -11,6 +11,42 @@ const targetRoot = join(siteRoot, 'preview');
 const homeFile = join(siteRoot, 'index.html');
 const reservationFile = join(siteRoot, 'reservaciones', 'index.html');
 
+const previewCsp = [
+  "default-src 'self' data: blob:",
+  "base-uri 'self'",
+  "connect-src 'self'",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "form-action 'none'",
+  "frame-src 'none'",
+  "img-src 'self' data: blob: https://cdn-icons-png.flaticon.com",
+  "media-src 'self' blob:",
+  "object-src 'none'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://fonts.googleapis.com",
+  "worker-src 'self' blob:"
+].join('; ');
+
+function isolatePreview(documentHtml) {
+  const withoutActiveIntegrations = documentHtml
+    .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '<div class="bocc-preview-disabled-embed" aria-hidden="true"></div>')
+    .replace(/<link\b[^>]+href=["'](?:https?:)?\/\/(?:www\.)?googletagmanager\.com[^>]*>/gi, '')
+    .replace(/<link\b[^>]+href=["'](?:https?:)?\/\/maxcdn\.bootstrapcdn\.com[^>]*>/gi, '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, (scriptBlock) => {
+      const integrationPattern = /bit[-_ ]?assist|\bSR7\b|revslider|tp-tools|tptools|\b_tpt\b|elementor[-_ ]?frontend|elementorFrontend|wp[-_ ]?emoji|wpEmoji|advanced_iframe|aiShowIframeId|googletagmanager|google_gtag/i;
+      return integrationPattern.test(scriptBlock) ? '' : scriptBlock;
+    });
+  const withoutPreviousCsp = withoutActiveIntegrations.replace(
+    /\s*<meta[^>]+http-equiv=["']Content-Security-Policy["'][^>]*>/gi,
+    ''
+  );
+  const cspTag = `<meta http-equiv="Content-Security-Policy" content="${previewCsp}">`;
+
+  return withoutPreviousCsp
+    .replace(/<head([^>]*)>/i, `<head$1>\n${cspTag}`)
+    .replace(/[ \t]+(?=\r?\n)/g, '')
+    .replace(/ +\t/g, '\t');
+}
+
 await mkdir(targetRoot, { recursive: true });
 await Promise.all([
   copyFile(join(sourceRoot, 'hero-variants.css'), join(targetRoot, 'hero-variants.css')),
@@ -24,7 +60,7 @@ await Promise.all([
   copyFile(join(sourceRoot, 'reservation-a.js'), join(targetRoot, 'reservation-a.js'))
 ]);
 
-let html = await readFile(homeFile, 'utf8');
+let html = isolatePreview(await readFile(homeFile, 'utf8'));
 const styleTag = '<link id="bocc-hero-styles" rel="stylesheet" href="preview/hero-variants.css">';
 const scriptTag = '<script id="bocc-hero-script" src="preview/hero-variants.js" defer></script>';
 const menuStyleTag = '<link id="bocc-menu-a-styles" rel="stylesheet" href="preview/interactive-menu-a.css">';
@@ -49,7 +85,7 @@ html = html.includes('</body>')
 
 await writeFile(homeFile, html, 'utf8');
 
-let reservationHtml = await readFile(reservationFile, 'utf8');
+let reservationHtml = isolatePreview(await readFile(reservationFile, 'utf8'));
 const reservationStyleTag = '<link id="bocc-reservation-a-styles" rel="stylesheet" href="../preview/reservation-a.css">';
 const reservationScriptTag = '<script id="bocc-reservation-a-script" src="../preview/reservation-a.js" defer></script>';
 
