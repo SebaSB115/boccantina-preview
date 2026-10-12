@@ -9,6 +9,20 @@
   document.body.dataset.boccantinaHero = variant;
   document.title = `Propuesta ${variant.toUpperCase()} — Boccantina`;
 
+  if (variant === 'a') {
+    document.querySelectorAll('a[href]').forEach((link) => {
+      try {
+        const target = new URL(link.href, window.location.href);
+        const normalizedPath = target.pathname.replace(/index\.html$/i, '');
+        if (target.origin === window.location.origin && normalizedPath === '/reservaciones/') {
+          link.setAttribute('href', '/reservaciones/?hero=a');
+        }
+      } catch {
+        // Ignore malformed links inherited from the mirrored WordPress page.
+      }
+    });
+  }
+
   const hero = document.createElement('section');
   hero.className = `bocc-hero bocc-hero--${variant}`;
   hero.setAttribute('aria-labelledby', `bocc-hero-${variant}-title`);
@@ -23,7 +37,7 @@
           <p class="bocc-hero__intro">Una invitación a descubrir Boccantina entre copas, platos para compartir y una atmósfera hecha para la noche.</p>
           <div class="bocc-hero__actions" aria-label="Acciones principales">
             <a class="bocc-button bocc-button--primary" href="#bocc-menu-app">Ver el menú interactivo</a>
-            <a class="bocc-button bocc-button--ghost" href="/reservaciones/">Reservar mesa</a>
+            <a class="bocc-button bocc-button--ghost" href="/reservaciones/?hero=a">Reservar mesa</a>
           </div>
         </div>
         <div class="bocc-hero__signature" aria-label="Concepto de la propuesta">

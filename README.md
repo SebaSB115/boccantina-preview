@@ -14,6 +14,7 @@ Abrir `http://localhost:4174/`.
 ## Variantes de hero para revisión
 
 - Propuesta A: `http://localhost:4174/?hero=a`
+- Reservación de Propuesta A: `http://localhost:4174/reservaciones/?hero=a`
 - Propuesta B: `http://localhost:4174/?hero=b`
 - Administración local de extras: `http://localhost:4174/?admin=extras`
 - Portada original: `http://localhost:4174/`
@@ -22,6 +23,10 @@ Las propuestas sustituyen los dos sliders superiores únicamente cuando se usa
 el parámetro `hero`. Además, `hero=a` reemplaza la carta estática por un menú
 interactivo local con carrito, ayuda y demostración del panel del mesero.
 `hero=b` y la portada original conservan la carta existente.
+
+La reservación de `hero=a` es un flujo demostrativo de tres pasos:
+disponibilidad, datos mínimos y revisión. Incluye confirmación y una vista
+operativa simuladas; no consulta horarios reales ni envía datos al restaurante.
 
 El panel administrativo de extras es una superficie separada de la carta del
 cliente. En este prototipo guarda la configuración únicamente en el

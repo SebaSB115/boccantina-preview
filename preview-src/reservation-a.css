@@ -1,0 +1,1069 @@
+html[data-boccantina-reservation="a"] {
+  min-width: 320px;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scroll-behavior: smooth;
+}
+
+body[data-boccantina-reservation="a"] {
+  --reservation-wine: #6e243a;
+  --reservation-wine-dark: #2a111b;
+  --reservation-gold: #d9ad5b;
+  --reservation-gold-light: #f1d697;
+  --reservation-ink: #0e0c0f;
+  --reservation-surface: #171419;
+  --reservation-raised: #211c23;
+  --reservation-ivory: #f7f0e6;
+  --reservation-muted: #c8bcae;
+  --reservation-border: rgba(217, 173, 91, 0.3);
+  --reservation-soft-border: rgba(247, 240, 230, 0.14);
+  --reservation-error: #ffb5ae;
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  overflow: visible !important;
+  background: var(--reservation-ink);
+  color: var(--reservation-ivory);
+  font-family: "Raleway", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+}
+
+body[data-boccantina-reservation="a"] *,
+body[data-boccantina-reservation="a"] *::before,
+body[data-boccantina-reservation="a"] *::after {
+  box-sizing: border-box;
+}
+
+body[data-boccantina-reservation="a"] button,
+body[data-boccantina-reservation="a"] input,
+body[data-boccantina-reservation="a"] select,
+body[data-boccantina-reservation="a"] textarea,
+body[data-boccantina-reservation="a"] a {
+  font: inherit;
+}
+
+body[data-boccantina-reservation="a"] button,
+body[data-boccantina-reservation="a"] a,
+body[data-boccantina-reservation="a"] select {
+  touch-action: manipulation;
+}
+
+body[data-boccantina-reservation="a"] button {
+  cursor: pointer;
+}
+
+body[data-boccantina-reservation="a"] :focus-visible {
+  outline: 3px solid #fff0bf;
+  outline-offset: 3px;
+}
+
+.bocc-reservation-skip {
+  position: fixed;
+  z-index: 100;
+  top: 12px;
+  left: 12px;
+  padding: 12px 16px;
+  background: var(--reservation-gold);
+  color: #1d1205;
+  font-weight: 800;
+  transform: translateY(-160%);
+}
+
+.bocc-reservation-skip:focus {
+  transform: translateY(0);
+}
+
+.bocc-reservation-shell {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 84% 4%, rgba(110, 36, 58, 0.24), transparent 31rem),
+    var(--reservation-ink);
+}
+
+.bocc-reservation-header {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  min-height: 80px;
+  padding: 14px clamp(20px, 4vw, 64px);
+  border-bottom: 1px solid var(--reservation-border);
+  background: rgba(14, 12, 15, 0.94);
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.bocc-reservation-brand,
+.bocc-reservation-brand > span:last-child,
+.bocc-reservation-header nav,
+.bocc-reservation-header nav a,
+.bocc-reservation-benefits > div,
+.bocc-reservation-benefits span,
+.bocc-reservation-card__top,
+.bocc-reservation-progress,
+.bocc-reservation-progress li,
+.bocc-input-shell,
+.bocc-form-actions,
+.bocc-primary-action,
+.bocc-secondary-action,
+.bocc-review-edit,
+.bocc-review-edit button,
+.bocc-prototype-notice,
+.bocc-confirmation__reference,
+.bocc-operations__head,
+.bocc-operation-card header,
+.bocc-operation-card footer,
+.bocc-operation-done {
+  display: flex;
+  align-items: center;
+}
+
+.bocc-reservation-brand {
+  color: var(--reservation-ivory);
+  gap: 12px;
+  text-decoration: none;
+}
+
+.bocc-reservation-brand > span:first-child {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--reservation-gold);
+  border-radius: 50%;
+  color: var(--reservation-gold-light);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.5rem;
+  place-items: center;
+}
+
+.bocc-reservation-brand > span:last-child {
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.bocc-reservation-brand strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+}
+
+.bocc-reservation-brand small {
+  margin-top: 4px;
+  color: var(--reservation-muted);
+  font-size: 0.69rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.bocc-reservation-header nav {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.bocc-reservation-header nav a {
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--reservation-ivory);
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bocc-reservation-header nav a:hover {
+  color: var(--reservation-gold-light);
+}
+
+.bocc-reservation-header nav svg {
+  width: 18px;
+  height: 18px;
+}
+
+.bocc-reservation-main {
+  display: grid;
+  width: min(1320px, calc(100% - 40px));
+  min-height: calc(100dvh - 80px);
+  margin: 0 auto;
+  padding: clamp(40px, 6vw, 84px) 0 72px;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(560px, 1.25fr);
+  gap: clamp(36px, 6vw, 92px);
+  align-items: start;
+}
+
+.bocc-reservation-story {
+  position: sticky;
+  top: 38px;
+  display: grid;
+  min-height: 650px;
+  padding: clamp(32px, 5vw, 64px);
+  overflow: hidden;
+  border: 1px solid var(--reservation-border);
+  background:
+    linear-gradient(180deg, rgba(14, 12, 15, 0.12), rgba(14, 12, 15, 0.95)),
+    url("/wp-content/uploads/2026/05/AERIAL-BCC.webp") center / cover;
+  align-content: space-between;
+  gap: 36px;
+}
+
+.bocc-reservation-story::before {
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(217, 173, 91, 0.22);
+  content: "";
+  pointer-events: none;
+}
+
+.bocc-reservation-story > * {
+  position: relative;
+  z-index: 1;
+}
+
+.bocc-reservation-eyebrow,
+.bocc-reservation-card__top p,
+.bocc-step-heading > span,
+.bocc-confirmation__eyebrow,
+.bocc-operations__head p {
+  margin: 0 0 10px;
+  color: var(--reservation-gold-light);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.bocc-reservation-story h1 {
+  max-width: 10ch;
+  margin: 0;
+  color: var(--reservation-ivory);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(3rem, 5vw, 5.6rem);
+  font-weight: 400;
+  line-height: 0.96;
+  text-transform: none;
+  text-wrap: balance;
+}
+
+.bocc-reservation-lead {
+  max-width: 39ch;
+  margin: 24px 0 0;
+  color: var(--reservation-muted);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.bocc-reservation-benefits {
+  display: grid;
+  gap: 16px;
+}
+
+.bocc-reservation-benefits > div {
+  padding-top: 16px;
+  border-top: 1px solid var(--reservation-soft-border);
+  gap: 14px;
+}
+
+.bocc-reservation-benefits svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  color: var(--reservation-gold-light);
+}
+
+.bocc-reservation-benefits span {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.bocc-reservation-benefits strong {
+  color: var(--reservation-ivory);
+  font-size: 0.88rem;
+}
+
+.bocc-reservation-benefits small {
+  color: var(--reservation-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.bocc-reservation-demo-note {
+  margin: 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--reservation-gold);
+  background: rgba(14, 12, 15, 0.76);
+  color: var(--reservation-muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.bocc-reservation-demo-note strong {
+  color: var(--reservation-gold-light);
+}
+
+.bocc-reservation-card {
+  min-width: 0;
+  border: 1px solid var(--reservation-soft-border);
+  background: var(--reservation-surface);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.24);
+}
+
+.bocc-reservation-card__top {
+  min-height: 106px;
+  padding: 24px clamp(24px, 4vw, 48px);
+  border-bottom: 1px solid var(--reservation-soft-border);
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.bocc-reservation-card__top h2 {
+  margin: 0;
+  color: var(--reservation-ivory);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: none;
+}
+
+.bocc-reservation-card__top > span,
+.bocc-operations__head > span {
+  padding: 7px 10px;
+  border: 1px solid var(--reservation-border);
+  color: var(--reservation-gold-light);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bocc-reservation-progress {
+  min-height: 78px;
+  margin: 0;
+  padding: 16px clamp(24px, 4vw, 48px);
+  border-bottom: 1px solid var(--reservation-soft-border);
+  list-style: none;
+  gap: 8px;
+}
+
+.bocc-reservation-progress li {
+  min-width: 0;
+  flex: 1;
+  gap: 9px;
+  color: #8f8580;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.bocc-reservation-progress li:not(:last-child)::after {
+  height: 1px;
+  margin-left: auto;
+  background: var(--reservation-soft-border);
+  content: "";
+  flex: 1;
+}
+
+.bocc-reservation-progress li > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid var(--reservation-soft-border);
+  border-radius: 50%;
+  font-size: 0.72rem;
+  place-items: center;
+}
+
+.bocc-reservation-progress li.is-active,
+.bocc-reservation-progress li.is-complete {
+  color: var(--reservation-ivory);
+}
+
+.bocc-reservation-progress li.is-active > span {
+  border-color: var(--reservation-gold);
+  background: var(--reservation-gold);
+  color: #1c1206;
+}
+
+.bocc-reservation-progress li.is-complete > span {
+  border-color: var(--reservation-gold);
+  color: var(--reservation-gold-light);
+}
+
+.bocc-reservation-form,
+.bocc-confirmation {
+  padding: clamp(28px, 5vw, 52px);
+}
+
+.bocc-step-heading {
+  margin-bottom: 34px;
+}
+
+.bocc-step-heading h3,
+.bocc-confirmation h3 {
+  margin: 0;
+  color: var(--reservation-ivory);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  font-weight: 400;
+  line-height: 1.12;
+  text-transform: none;
+}
+
+.bocc-step-heading p,
+.bocc-confirmation > p:not(.bocc-confirmation__eyebrow) {
+  max-width: 60ch;
+  margin: 10px 0 0;
+  color: var(--reservation-muted);
+  line-height: 1.55;
+}
+
+.bocc-choice-group {
+  min-width: 0;
+  margin: 0 0 30px;
+  padding: 0;
+  border: 0;
+}
+
+.bocc-choice-group > legend,
+.bocc-field > span:first-child {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--reservation-ivory);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.bocc-choice-group > legend span,
+.bocc-field > span:first-child b {
+  margin-left: 5px;
+  color: var(--reservation-gold-light);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.bocc-date-options,
+.bocc-time-options {
+  display: grid;
+  gap: 10px;
+}
+
+.bocc-date-options {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bocc-date-options button,
+.bocc-time-options button {
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--reservation-soft-border);
+  background: var(--reservation-raised);
+  color: var(--reservation-ivory);
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.bocc-date-options button {
+  display: grid;
+  text-align: left;
+  gap: 2px;
+}
+
+.bocc-date-options button small {
+  color: var(--reservation-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bocc-date-options button strong {
+  font-size: 0.8rem;
+}
+
+.bocc-date-options button:hover,
+.bocc-time-options button:hover,
+.bocc-date-options button[aria-pressed="true"],
+.bocc-time-options button[aria-pressed="true"] {
+  border-color: var(--reservation-gold);
+  background: rgba(217, 173, 91, 0.12);
+  color: var(--reservation-gold-light);
+}
+
+.bocc-time-options {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.bocc-form-row {
+  display: grid;
+  margin-bottom: 30px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.bocc-field {
+  display: block;
+  min-width: 0;
+  margin-bottom: 24px;
+}
+
+.bocc-form-row .bocc-field {
+  margin-bottom: 0;
+}
+
+.bocc-field input,
+.bocc-field select,
+.bocc-field textarea {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px;
+  border: 1px solid var(--reservation-soft-border);
+  border-radius: 0;
+  outline: 0;
+  background: #0f0d10;
+  color: var(--reservation-ivory);
+}
+
+.bocc-field textarea {
+  min-height: 116px;
+  padding-block: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.bocc-field input::placeholder,
+.bocc-field textarea::placeholder {
+  color: #897f79;
+  opacity: 1;
+}
+
+.bocc-field input:focus,
+.bocc-field select:focus,
+.bocc-field textarea:focus {
+  border-color: var(--reservation-gold);
+  box-shadow: 0 0 0 1px var(--reservation-gold);
+}
+
+.bocc-input-shell {
+  position: relative;
+}
+
+.bocc-input-shell > svg {
+  position: absolute;
+  z-index: 1;
+  left: 14px;
+  width: 19px;
+  height: 19px;
+  color: var(--reservation-gold-light);
+  pointer-events: none;
+}
+
+.bocc-input-shell input,
+.bocc-input-shell select {
+  padding-left: 44px;
+}
+
+.bocc-field > small,
+.bocc-field-help {
+  display: block;
+  margin: 8px 0 0;
+  color: var(--reservation-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.bocc-field-error {
+  margin: 8px 0 0;
+  color: var(--reservation-error);
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.bocc-field [aria-invalid="true"],
+.bocc-choice-group[aria-invalid="true"] .bocc-date-options button,
+.bocc-choice-group[aria-invalid="true"] .bocc-time-options button {
+  border-color: rgba(255, 181, 174, 0.7);
+}
+
+.bocc-error-summary {
+  margin: clamp(28px, 5vw, 52px) clamp(28px, 5vw, 52px) 0;
+  padding: 16px 18px;
+  border-left: 4px solid var(--reservation-error);
+  background: rgba(255, 181, 174, 0.08);
+  color: var(--reservation-ivory);
+}
+
+.bocc-error-summary strong {
+  color: var(--reservation-error);
+}
+
+.bocc-error-summary ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.bocc-error-summary a {
+  color: var(--reservation-ivory);
+}
+
+.bocc-form-actions {
+  margin-top: 34px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bocc-form-actions--end {
+  justify-content: flex-end;
+}
+
+.bocc-primary-action,
+.bocc-secondary-action {
+  min-height: 50px;
+  padding: 0 18px;
+  border: 1px solid var(--reservation-gold);
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.bocc-primary-action {
+  background: var(--reservation-gold);
+  color: #1d1205;
+}
+
+.bocc-primary-action:hover {
+  background: var(--reservation-gold-light);
+}
+
+.bocc-secondary-action {
+  background: transparent;
+  color: var(--reservation-gold-light);
+}
+
+.bocc-primary-action svg,
+.bocc-secondary-action svg,
+.bocc-review-edit svg,
+.bocc-prototype-notice svg,
+.bocc-confirmation__icon svg,
+.bocc-operation-done svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.bocc-reservation-summary {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--reservation-soft-border);
+  border-left: 1px solid var(--reservation-soft-border);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bocc-reservation-summary > div {
+  min-width: 0;
+  padding: 18px;
+  border-right: 1px solid var(--reservation-soft-border);
+  border-bottom: 1px solid var(--reservation-soft-border);
+}
+
+.bocc-reservation-summary__wide {
+  grid-column: 1 / -1;
+}
+
+.bocc-reservation-summary dt {
+  display: flex;
+  margin-bottom: 6px;
+  color: var(--reservation-muted);
+  align-items: center;
+  gap: 7px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bocc-reservation-summary dt svg {
+  width: 16px;
+  height: 16px;
+  color: var(--reservation-gold-light);
+}
+
+.bocc-reservation-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--reservation-ivory);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.bocc-review-edit {
+  margin-top: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bocc-review-edit button {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--reservation-gold-light);
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.bocc-prototype-notice {
+  margin-top: 26px;
+  padding: 15px 17px;
+  border: 1px solid var(--reservation-border);
+  background: rgba(217, 173, 91, 0.07);
+  gap: 13px;
+}
+
+.bocc-prototype-notice svg {
+  color: var(--reservation-gold-light);
+}
+
+.bocc-prototype-notice p {
+  display: grid;
+  margin: 0;
+  gap: 3px;
+}
+
+.bocc-prototype-notice strong {
+  color: var(--reservation-ivory);
+  font-size: 0.79rem;
+}
+
+.bocc-prototype-notice span {
+  color: var(--reservation-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.bocc-confirmation {
+  text-align: center;
+}
+
+.bocc-confirmation__icon {
+  display: grid;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 20px;
+  border: 1px solid var(--reservation-gold);
+  border-radius: 50%;
+  color: var(--reservation-gold-light);
+  place-items: center;
+}
+
+.bocc-confirmation > p:not(.bocc-confirmation__eyebrow) {
+  margin-inline: auto;
+}
+
+.bocc-confirmation__reference {
+  width: min(440px, 100%);
+  margin: 24px auto 32px;
+  padding: 16px;
+  border: 1px solid var(--reservation-border);
+  background: var(--reservation-raised);
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bocc-confirmation__reference span {
+  color: var(--reservation-muted);
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bocc-confirmation__reference strong {
+  color: var(--reservation-gold-light);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bocc-confirmation__reference b {
+  color: var(--reservation-ivory);
+  font-size: 0.72rem;
+}
+
+.bocc-confirmation .bocc-reservation-summary,
+.bocc-confirmation .bocc-prototype-notice,
+.bocc-confirmation .bocc-form-actions,
+.bocc-confirmation .bocc-operations {
+  text-align: left;
+}
+
+.bocc-form-actions--confirmation {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.bocc-operations {
+  margin-top: 42px;
+  padding-top: 32px;
+  border-top: 1px solid var(--reservation-soft-border);
+}
+
+.bocc-operations__head {
+  margin-bottom: 16px;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bocc-operations__head h4 {
+  margin: 0;
+  color: var(--reservation-ivory);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.bocc-operation-card {
+  border: 1px solid var(--reservation-border);
+  background: #100e11;
+}
+
+.bocc-operation-card header {
+  padding: 18px;
+  border-bottom: 1px solid var(--reservation-soft-border);
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bocc-operation-card header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.bocc-operation-card header span {
+  color: var(--reservation-muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.bocc-operation-card header strong {
+  color: var(--reservation-ivory);
+  font-size: 1rem;
+}
+
+.bocc-operation-card header > b {
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 214, 127, 0.4);
+  color: #ffd67f;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.bocc-operation-card header > b[data-status="confirmed"] {
+  border-color: rgba(186, 217, 159, 0.45);
+  color: #bad99f;
+}
+
+.bocc-operation-card dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bocc-operation-card dl > div {
+  padding: 16px 18px;
+  border-right: 1px solid var(--reservation-soft-border);
+  border-bottom: 1px solid var(--reservation-soft-border);
+}
+
+.bocc-operation-card dt {
+  margin-bottom: 5px;
+  color: var(--reservation-muted);
+  font-size: 0.63rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.bocc-operation-card dd {
+  margin: 0;
+  color: var(--reservation-ivory);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.bocc-operation-card footer {
+  padding: 16px 18px;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.bocc-operation-card footer p {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--reservation-muted);
+  font-size: 0.67rem;
+  line-height: 1.45;
+}
+
+.bocc-operation-card footer button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--reservation-gold);
+  background: var(--reservation-gold);
+  color: #1d1205;
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.bocc-operation-done {
+  color: #bad99f;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+@media (max-width: 1020px) {
+  .bocc-reservation-main {
+    grid-template-columns: 1fr;
+  }
+
+  .bocc-reservation-story {
+    position: relative;
+    top: auto;
+    min-height: 520px;
+  }
+
+  .bocc-reservation-story h1 {
+    max-width: 13ch;
+  }
+}
+
+@media (max-width: 680px) {
+  .bocc-reservation-header {
+    padding-inline: 16px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bocc-reservation-header nav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .bocc-reservation-header nav a {
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+
+  .bocc-reservation-main {
+    width: min(100% - 24px, 1320px);
+    padding-top: 18px;
+    gap: 18px;
+  }
+
+  .bocc-reservation-story {
+    min-height: 460px;
+    padding: 32px 26px;
+  }
+
+  .bocc-reservation-story h1 {
+    font-size: clamp(2.7rem, 14vw, 4.1rem);
+  }
+
+  .bocc-reservation-card__top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .bocc-reservation-progress {
+    align-items: flex-start;
+  }
+
+  .bocc-reservation-progress li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .bocc-reservation-progress li:not(:last-child)::after {
+    display: none;
+  }
+
+  .bocc-reservation-progress li b {
+    font-size: 0.58rem;
+    overflow-wrap: anywhere;
+  }
+
+  .bocc-reservation-form,
+  .bocc-confirmation {
+    padding: 26px 18px;
+  }
+
+  .bocc-error-summary {
+    margin: 26px 18px 0;
+  }
+
+  .bocc-date-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bocc-time-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .bocc-form-row,
+  .bocc-reservation-summary,
+  .bocc-operation-card dl {
+    grid-template-columns: 1fr;
+  }
+
+  .bocc-reservation-summary__wide {
+    grid-column: auto;
+  }
+
+  .bocc-form-row {
+    margin-bottom: 24px;
+    gap: 24px;
+  }
+
+  .bocc-form-actions,
+  .bocc-operation-card footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .bocc-primary-action,
+  .bocc-secondary-action,
+  .bocc-operation-card footer button {
+    width: 100%;
+  }
+
+  .bocc-operations__head,
+  .bocc-operation-card header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-boccantina-reservation="a"] {
+    scroll-behavior: auto;
+  }
+
+  body[data-boccantina-reservation="a"] *,
+  body[data-boccantina-reservation="a"] *::before,
+  body[data-boccantina-reservation="a"] *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

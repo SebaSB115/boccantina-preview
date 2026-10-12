@@ -9,6 +9,7 @@ const siteRoot = join(repoRoot, 'snapshot', host);
 const sourceRoot = join(repoRoot, 'preview-src');
 const targetRoot = join(siteRoot, 'preview');
 const homeFile = join(siteRoot, 'index.html');
+const reservationFile = join(siteRoot, 'reservaciones', 'index.html');
 
 await mkdir(targetRoot, { recursive: true });
 await Promise.all([
@@ -18,7 +19,9 @@ await Promise.all([
   copyFile(join(sourceRoot, 'interactive-menu-a.js'), join(targetRoot, 'interactive-menu-a.js')),
   copyFile(join(sourceRoot, 'menu-extras-config-a.js'), join(targetRoot, 'menu-extras-config-a.js')),
   copyFile(join(sourceRoot, 'menu-admin-a.css'), join(targetRoot, 'menu-admin-a.css')),
-  copyFile(join(sourceRoot, 'menu-admin-a.js'), join(targetRoot, 'menu-admin-a.js'))
+  copyFile(join(sourceRoot, 'menu-admin-a.js'), join(targetRoot, 'menu-admin-a.js')),
+  copyFile(join(sourceRoot, 'reservation-a.css'), join(targetRoot, 'reservation-a.css')),
+  copyFile(join(sourceRoot, 'reservation-a.js'), join(targetRoot, 'reservation-a.js'))
 ]);
 
 let html = await readFile(homeFile, 'utf8');
@@ -45,4 +48,19 @@ html = html.includes('</body>')
   : `${html}\n${extrasConfigScriptTag}\n${scriptTag}\n${menuScriptTag}\n${adminScriptTag}`;
 
 await writeFile(homeFile, html, 'utf8');
+
+let reservationHtml = await readFile(reservationFile, 'utf8');
+const reservationStyleTag = '<link id="bocc-reservation-a-styles" rel="stylesheet" href="/preview/reservation-a.css">';
+const reservationScriptTag = '<script id="bocc-reservation-a-script" src="/preview/reservation-a.js" defer></script>';
+
+reservationHtml = reservationHtml.replace(/\s*<link id="bocc-reservation-a-styles"[^>]*>/i, '');
+reservationHtml = reservationHtml.replace(/\s*<script id="bocc-reservation-a-script"[^>]*><\/script>/i, '');
+reservationHtml = reservationHtml.includes('</head>')
+  ? reservationHtml.replace('</head>', `${reservationStyleTag}\n</head>`)
+  : `${reservationStyleTag}\n${reservationHtml}`;
+reservationHtml = reservationHtml.includes('</body>')
+  ? reservationHtml.replace('</body>', `${reservationScriptTag}\n</body>`)
+  : `${reservationHtml}\n${reservationScriptTag}`;
+
+await writeFile(reservationFile, reservationHtml, 'utf8');
 console.log('Variantes de hero A/B aplicadas al preview local.');
