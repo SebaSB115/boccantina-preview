@@ -1,3 +1,30 @@
+html[data-boccantina-admin="extras"] {
+  min-width: 320px;
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  scrollbar-color: #d6ac63 #241019;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+}
+
+html[data-boccantina-admin="extras"]::-webkit-scrollbar {
+  width: 14px;
+}
+
+html[data-boccantina-admin="extras"]::-webkit-scrollbar-track {
+  background: #241019;
+}
+
+html[data-boccantina-admin="extras"]::-webkit-scrollbar-thumb {
+  border: 3px solid #241019;
+  border-radius: 999px;
+  background: #d6ac63;
+}
+
+html[data-boccantina-admin="extras"]::-webkit-scrollbar-thumb:hover {
+  background: #f0d49a;
+}
+
 body[data-boccantina-admin="extras"] {
   --admin-wine: #5a1c2f;
   --admin-wine-deep: #241019;
@@ -14,6 +41,7 @@ body[data-boccantina-admin="extras"] {
   --admin-danger: #ffb0a8;
   min-width: 320px;
   margin: 0;
+  overflow: visible !important;
   background: var(--admin-ink);
   color: var(--admin-text);
   font-family: Arial, Helvetica, sans-serif;

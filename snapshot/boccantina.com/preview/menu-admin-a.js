@@ -28,7 +28,10 @@
     return `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
   };
 
+  document.documentElement.dataset.boccantinaAdmin = 'extras';
+  document.documentElement.classList.remove('plwao-overflow');
   document.body.dataset.boccantinaAdmin = 'extras';
+  document.body.classList.remove('plwao-overflow');
   document.title = 'Administrar extras — Boccantina';
   document.body.innerHTML = `
     <a class="bocc-admin-skip" href="#bocc-admin-editor">Ir al editor</a>
