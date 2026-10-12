@@ -145,6 +145,44 @@
     }
   };
 
+  const extraCatalog = {
+    pizza: [
+      { id: 'extra-mozzarella', es: 'Mozzarella extra', en: 'Extra mozzarella' },
+      { id: 'extra-pepperoni', es: 'Pepperoni extra', en: 'Extra pepperoni' },
+      { id: 'extra-prosciutto', es: 'Prosciutto extra', en: 'Extra prosciutto' },
+      { id: 'extra-bacon', es: 'Tocineta extra', en: 'Extra bacon' },
+      { id: 'extra-mushrooms', es: 'Champiñones', en: 'Mushrooms' },
+      { id: 'extra-jalapenos', es: 'Jalapeños', en: 'Jalapeños' }
+    ],
+    burger: [
+      { id: 'extra-angus-patty', es: 'Torta Angus extra', en: 'Extra Angus patty' },
+      { id: 'extra-cheddar', es: 'Cheddar extra', en: 'Extra cheddar' },
+      { id: 'extra-bacon', es: 'Tocineta extra', en: 'Extra bacon' },
+      { id: 'extra-caramelized-onion', es: 'Cebolla caramelizada', en: 'Caramelized onion' },
+      { id: 'extra-fried-egg', es: 'Huevo frito', en: 'Fried egg' },
+      { id: 'extra-jalapenos', es: 'Jalapeños', en: 'Jalapeños' }
+    ]
+  };
+
+  const extraCopy = {
+    es: {
+      customize: 'Personalizar', customizable: 'Personalizable', pizzaTitle: 'Personaliza tu pizza', burgerTitle: 'Personaliza tu hamburguesa',
+      instruction: 'Selecciona uno o más extras. Se enviarán vinculados a este plato.',
+      demoNotice: 'Opciones de demostración · disponibilidad y precios por confirmar.',
+      noneSelected: 'Sin extras seleccionados', selectedSingular: '1 extra seleccionado', selectedPlural: 'extras seleccionados',
+      addConfigured: 'Agregar configuración al pedido', itemExtras: 'Extras de este plato', preparationNote: 'Otra indicación de preparación',
+      notePlaceholder: 'Ej. sin cebolla', priceNotice: 'Los extras de esta demostración no modifican el total hasta confirmar sus precios.', extrasLabel: 'EXTRAS'
+    },
+    en: {
+      customize: 'Customize', customizable: 'Customizable', pizzaTitle: 'Customize your pizza', burgerTitle: 'Customize your burger',
+      instruction: 'Select one or more extras. They will be sent as part of this item.',
+      demoNotice: 'Demo options · availability and prices to be confirmed.',
+      noneSelected: 'No extras selected', selectedSingular: '1 extra selected', selectedPlural: 'extras selected',
+      addConfigured: 'Add configuration to order', itemExtras: 'Extras for this item', preparationNote: 'Other preparation request',
+      notePlaceholder: 'E.g. no onion', priceNotice: 'Demo extras do not change the total until their prices are confirmed.', extrasLabel: 'EXTRAS'
+    }
+  };
+
   const state = {
     lang: 'es',
     category: 'entradas',
@@ -157,7 +195,8 @@
     selectedProduct: null,
     selectedHelpProduct: null,
     cartNote: '',
-    failedSend: false
+    failedSend: false,
+    nextLineNumber: 1
   };
 
   const app = document.createElement('section');
@@ -246,6 +285,7 @@
   const dialog = (name) => app.querySelector(`[data-dialog="${name}"]`);
   const t = () => copy[state.lang];
   const ft = () => filterCopy[state.lang];
+  const et = () => extraCopy[state.lang];
   const productById = (id) => products.find((product) => product.id === id);
   const categoryById = (id) => categories.find((category) => category.id === id);
   const productName = (product) => state.lang === 'es' ? product.nameEs : product.nameEn;
@@ -255,6 +295,13 @@
   const formatPrice = (price) => price === null ? t().unavailable : `₡${price.toLocaleString('en-US')}`;
   const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
   const normalizeSearch = (value = '') => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const customizationType = (product) => {
+    if (product?.category === 'pizzas') return 'pizza';
+    if (product?.category === 'burgers' || (product?.category === 'minis' && product.id !== 'wings')) return 'burger';
+    return null;
+  };
+  const extraOptionsForProduct = (product) => extraCatalog[customizationType(product)] || [];
+  const extraName = (extra) => extra[state.lang];
   const foodCategoryIds = ['entradas', 'burgers', 'minis', 'bocas', 'pizzas', 'postres'];
   const isDiscovering = () => Boolean(state.query.trim()) || state.filter !== 'all' || state.foodCategory !== null;
   const formatItemCount = (count) => state.lang === 'es'
@@ -269,7 +316,8 @@
       bag: '<path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/>',
       bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/>',
       arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-      search: '<circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/>'
+      search: '<circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/>',
+      check: '<path d="m5 12 4 4L19 6"/>'
     };
     return `<svg class="bocc-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name] || ''}</svg>`;
   };
@@ -406,8 +454,11 @@
     region('products').innerHTML = visible.map((product, index) => {
       const unavailable = product.price === null;
       const disabled = product.soldOut;
-      const action = unavailable ? 'ask-product' : 'add-product';
-      const actionLabel = disabled ? t().soldOut : unavailable ? t().unavailable : t().add;
+      const customizable = Boolean(customizationType(product));
+      const action = unavailable ? 'ask-product' : customizable ? 'open-product' : 'add-product';
+      const actionLabel = disabled ? t().soldOut : unavailable ? t().unavailable : customizable ? et().customize : t().add;
+      const tags = product.tags.map((tag) => tagLabels[state.lang][tag]);
+      if (customizable) tags.push(et().customizable);
       return `
         <article class="bocc-product-card${disabled ? ' is-sold-out' : ''}">
           <button class="bocc-product-card__image" type="button" data-action="open-product" data-product="${product.id}" aria-label="${escapeHtml(`${t().details}: ${productName(product)}`)}">
@@ -418,7 +469,7 @@
             ${isDiscovering() ? `<span class="bocc-product-card__category">${escapeHtml(categoryName(categoryById(product.category)))}</span>` : ''}
             <div class="bocc-product-card__title-row"><h4>${escapeHtml(productName(product))}</h4><strong>${escapeHtml(formatPrice(product.price))}</strong></div>
             <p>${escapeHtml(productDescription(product))}</p>
-            ${product.tags.length ? `<div class="bocc-product-tags">${product.tags.map((tag) => `<span>${escapeHtml(tagLabels[state.lang][tag])}</span>`).join('')}</div>` : ''}
+            ${tags.length ? `<div class="bocc-product-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
             <div class="bocc-product-card__actions">
               <button class="bocc-add-button" type="button" data-action="${action}" data-product="${product.id}" ${disabled ? 'disabled' : ''}>${escapeHtml(actionLabel)}</button>
               <button class="bocc-text-button" type="button" data-action="open-product" data-product="${product.id}">${escapeHtml(t().details)}</button>
@@ -430,7 +481,16 @@
   }
 
   function cartItems() {
-    return [...state.cart.entries()].map(([id, item]) => ({ product: productById(id), ...item }));
+    return [...state.cart.entries()].map(([lineId, item]) => {
+      const product = productById(item.productId);
+      const allowedExtras = extraOptionsForProduct(product);
+      return {
+        lineId,
+        product,
+        extras: item.extraIds.map((extraId) => allowedExtras.find((extra) => extra.id === extraId)).filter(Boolean),
+        ...item
+      };
+    });
   }
 
   function cartSummary() {
@@ -443,7 +503,9 @@
     bar.hidden = summary.count === 0;
     region('cart-count').textContent = state.lang === 'es' ? `${summary.count} ${summary.count === 1 ? 'producto' : 'productos'}` : `${summary.count} ${summary.count === 1 ? 'item' : 'items'}`;
     region('cart-total').textContent = `${t().estimated}: ${formatPrice(summary.total)}`;
-    region('live').textContent = state.lang === 'es' ? `${summary.count} productos en el pedido` : `${summary.count} items in the order`;
+    region('live').textContent = state.lang === 'es'
+      ? `${summary.count} ${summary.count === 1 ? 'producto' : 'productos'} en el pedido`
+      : `${summary.count} ${summary.count === 1 ? 'item' : 'items'} in the order`;
   }
 
   function renderOrderProgress() {
@@ -492,19 +554,45 @@
     if (openTarget?.open) openTarget.close();
   }
 
-  function addProduct(id, quantity = 1, note = '') {
+  function addProduct(id, quantity = 1, note = '', extraIds = []) {
     const product = productById(id);
     if (!product || product.price === null || product.soldOut) return;
-    const current = state.cart.get(id) || { quantity: 0, note: '' };
-    state.cart.set(id, { quantity: current.quantity + quantity, note: note || current.note });
+    const allowedIds = new Set(extraOptionsForProduct(product).map((extra) => extra.id));
+    const normalizedExtraIds = [...new Set(extraIds)].filter((extraId) => allowedIds.has(extraId)).sort();
+    const normalizedNote = note.trim();
+    const configurationKey = JSON.stringify([id, normalizedExtraIds, normalizeSearch(normalizedNote)]);
+    const existing = [...state.cart.entries()].find(([, item]) => item.configurationKey === configurationKey);
+    if (existing) {
+      const [lineId, current] = existing;
+      state.cart.set(lineId, { ...current, quantity: current.quantity + quantity });
+    } else {
+      const lineId = `L-${String(state.nextLineNumber).padStart(3, '0')}`;
+      state.nextLineNumber += 1;
+      state.cart.set(lineId, { productId: id, quantity, note: normalizedNote, extraIds: normalizedExtraIds, configurationKey });
+    }
     renderCartBar();
-    announce(state.lang === 'es' ? `${productName(product)} agregado al pedido.` : `${productName(product)} added to your order.`);
+    const extraMessage = normalizedExtraIds.length
+      ? state.lang === 'es' ? ` con ${normalizedExtraIds.length} ${normalizedExtraIds.length === 1 ? 'extra' : 'extras'}` : ` with ${normalizedExtraIds.length} ${normalizedExtraIds.length === 1 ? 'extra' : 'extras'}`
+      : '';
+    announce(state.lang === 'es' ? `Se agregó ${productName(product)}${extraMessage} al pedido.` : `${productName(product)} added${extraMessage} to your order.`);
+  }
+
+  function updateExtraSummary() {
+    const target = dialog('product');
+    const checked = [...target.querySelectorAll('[data-field="product-extra"]:checked')];
+    const count = target.querySelector('[data-region="extra-count"]');
+    const names = target.querySelector('[data-region="extra-names"]');
+    if (!count || !names) return;
+    count.textContent = checked.length === 0 ? et().noneSelected : checked.length === 1 ? et().selectedSingular : `${checked.length} ${et().selectedPlural}`;
+    names.textContent = checked.map((input) => input.dataset.extraName).join(' · ');
   }
 
   function renderProductDialog(id) {
     const product = productById(id);
     state.selectedProduct = id;
     const canAdd = product.price !== null && !product.soldOut;
+    const type = customizationType(product);
+    const extras = extraOptionsForProduct(product);
     dialog('product').innerHTML = `
       <div class="bocc-dialog__panel bocc-product-sheet">
         <button class="bocc-dialog__close" type="button" data-action="close-dialog" aria-label="${state.lang === 'es' ? 'Cerrar' : 'Close'}">${icon('close')}</button>
@@ -515,10 +603,23 @@
           <p class="bocc-product-sheet__description">${escapeHtml(productDescription(product))}</p>
           ${canAdd ? `
             <div class="bocc-product-sheet__controls">
+              ${type ? `<fieldset class="bocc-extra-builder">
+                <legend>${escapeHtml(type === 'pizza' ? et().pizzaTitle : et().burgerTitle)}</legend>
+                <p>${escapeHtml(et().instruction)}</p>
+                <div class="bocc-extra-builder__options">
+                  ${extras.map((extra) => `<label class="bocc-extra-option">
+                    <input type="checkbox" value="${extra.id}" data-field="product-extra" data-extra-name="${escapeHtml(extraName(extra))}">
+                    <span class="bocc-extra-option__check">${icon('check')}</span>
+                    <span>${escapeHtml(extraName(extra))}</span>
+                  </label>`).join('')}
+                </div>
+                <div class="bocc-extra-summary" aria-live="polite" aria-atomic="true"><strong data-region="extra-count">${escapeHtml(et().noneSelected)}</strong><span data-region="extra-names"></span></div>
+                <small>${escapeHtml(et().demoNotice)}</small>
+              </fieldset>` : ''}
               <label>${state.lang === 'es' ? 'Cantidad' : 'Quantity'}<input type="number" min="1" max="12" value="1" data-field="product-quantity"></label>
-              <label>${state.lang === 'es' ? 'Notas para cocina' : 'Kitchen notes'}<textarea rows="3" data-field="product-note" placeholder="${state.lang === 'es' ? 'Ej. sin cebolla' : 'E.g. no onion'}"></textarea></label>
+              <label>${escapeHtml(et().preparationNote)} <span>${state.lang === 'es' ? '(opcional)' : '(optional)'}</span><textarea rows="3" data-field="product-note" placeholder="${escapeHtml(et().notePlaceholder)}"></textarea></label>
             </div>
-            <button class="bocc-primary-button" type="button" data-action="add-from-dialog" data-product="${product.id}">${escapeHtml(state.lang === 'es' ? 'Agregar al pedido' : 'Add to order')} ${icon('bag')}</button>` : `
+            <button class="bocc-primary-button" type="button" data-action="add-from-dialog" data-product="${product.id}">${escapeHtml(type ? et().addConfigured : (state.lang === 'es' ? 'Agregar al pedido' : 'Add to order'))} ${icon('bag')}</button>` : `
             <div class="bocc-product-sheet__notice">${escapeHtml(product.soldOut ? t().soldOut : (state.lang === 'es' ? 'Precio no indicado en la carta actual.' : 'Price is not listed in the current menu.'))}</div>
             <button class="bocc-primary-button" type="button" data-action="ask-product" data-product="${product.id}">${escapeHtml(t().ask)} ${icon('arrow')}</button>`}
         </div>
@@ -532,21 +633,25 @@
       <div class="bocc-dialog__panel bocc-cart-sheet">
         <header><div><p>${t().table}</p><h3>${state.lang === 'es' ? 'Tu pedido' : 'Your order'}</h3></div><button class="bocc-dialog__close" type="button" data-action="close-dialog" aria-label="${state.lang === 'es' ? 'Cerrar' : 'Close'}">${icon('close')}</button></header>
         <div class="bocc-cart-sheet__items">
-          ${items.length ? items.map(({ product, quantity, note }) => `
+          ${items.length ? items.map(({ lineId, product, quantity, note, extras }) => `
             <article class="bocc-cart-item">
               <img src="${product.image}" alt="" width="112" height="112">
-              <div><h4>${escapeHtml(productName(product))}</h4><span>${formatPrice(product.price * quantity)}</span>${note ? `<p>${escapeHtml(note)}</p>` : ''}</div>
-              <div class="bocc-quantity" aria-label="${state.lang === 'es' ? 'Cantidad' : 'Quantity'}">
-                <button type="button" data-action="decrease" data-product="${product.id}" aria-label="${state.lang === 'es' ? 'Reducir cantidad' : 'Decrease quantity'}">${icon('minus')}</button>
-                <span>${quantity}</span>
-                <button type="button" data-action="increase" data-product="${product.id}" aria-label="${state.lang === 'es' ? 'Aumentar cantidad' : 'Increase quantity'}">${icon('plus')}</button>
+              <div class="bocc-cart-item__copy"><h4>${escapeHtml(productName(product))}</h4><span>${formatPrice(product.price * quantity)}</span>
+                ${extras.length ? `<div class="bocc-line-extras"><strong>${escapeHtml(et().itemExtras)}</strong><ul>${extras.map((extra) => `<li>${escapeHtml(extraName(extra))}</li>`).join('')}</ul></div>` : ''}
+                ${note ? `<p><strong>${escapeHtml(et().preparationNote)}:</strong> ${escapeHtml(note)}</p>` : ''}
               </div>
-              <button class="bocc-cart-item__remove" type="button" data-action="remove" data-product="${product.id}">${state.lang === 'es' ? 'Eliminar' : 'Remove'}</button>
+              <div class="bocc-quantity" aria-label="${escapeHtml(`${state.lang === 'es' ? 'Cantidad' : 'Quantity'}: ${productName(product)}`)}">
+                <button type="button" data-action="decrease" data-line="${lineId}" aria-label="${state.lang === 'es' ? 'Reducir cantidad' : 'Decrease quantity'}">${icon('minus')}</button>
+                <span>${quantity}</span>
+                <button type="button" data-action="increase" data-line="${lineId}" aria-label="${state.lang === 'es' ? 'Aumentar cantidad' : 'Increase quantity'}">${icon('plus')}</button>
+              </div>
+              <button class="bocc-cart-item__remove" type="button" data-action="remove" data-line="${lineId}">${state.lang === 'es' ? 'Eliminar' : 'Remove'}</button>
             </article>`).join('') : `<div class="bocc-empty-state"><h4>${state.lang === 'es' ? 'Tu pedido está vacío.' : 'Your order is empty.'}</h4><p>${state.lang === 'es' ? 'Agrega un plato para comenzar.' : 'Add a dish to get started.'}</p></div>`}
         </div>
         ${items.length ? `
           <label class="bocc-cart-note">${state.lang === 'es' ? 'Instrucciones para el pedido' : 'Order instructions'}<textarea rows="3" data-field="cart-note" placeholder="${state.lang === 'es' ? 'Ej. servir bebidas primero' : 'E.g. serve drinks first'}">${escapeHtml(state.cartNote)}</textarea></label>
           <div class="bocc-cart-sheet__total"><span>${t().estimated}</span><strong>${formatPrice(summary.total)}</strong></div>
+          ${items.some((item) => item.extras.length) ? `<p class="bocc-cart-sheet__price-notice">${escapeHtml(et().priceNotice)}</p>` : ''}
           <div class="bocc-cart-error" data-region="send-error" ${state.failedSend ? '' : 'hidden'} role="alert"><strong>${state.lang === 'es' ? 'No se pudo enviar la demostración.' : 'The demo order could not be sent.'}</strong><span>${state.lang === 'es' ? 'El pedido se conserva. Reintenta cuando quieras.' : 'Your order is safe. Try again whenever you are ready.'}</span></div>
           <button class="bocc-primary-button" type="button" data-action="send-order">${state.lang === 'es' ? 'Enviar pedido' : 'Send order'} ${icon('arrow')}</button>
           <button class="bocc-simulate-button" type="button" data-action="simulate-error">${state.lang === 'es' ? 'Ver estado de error simulado' : 'Preview simulated error state'}</button>` : ''}
@@ -602,7 +707,7 @@
           <section><div class="bocc-waiter-column__head"><h4>${state.lang === 'es' ? 'Pedidos' : 'Orders'}</h4><span>${order ? 1 : 0}</span></div>
             ${order ? `<article class="bocc-waiter-order">
               <div class="bocc-waiter-order__head"><div><span>${t().table} · ${order.number}</span><strong>${statusLabels[order.status]}</strong></div><time>${state.lang === 'es' ? 'Ahora' : 'Now'}</time></div>
-              <ul>${order.items.map((item) => `<li><span>${item.quantity} × ${escapeHtml(productName(item.product))}</span><strong>${formatPrice(item.product.price * item.quantity)}</strong>${item.note ? `<small>${escapeHtml(item.note)}</small>` : ''}</li>`).join('')}</ul>
+              <ul>${order.items.map((item) => `<li><span>${item.quantity} × ${escapeHtml(productName(item.product))}</span><strong>${formatPrice(item.product.price * item.quantity)}</strong>${item.extras.length ? `<small class="bocc-waiter-order__extras"><b>${escapeHtml(et().extrasLabel)}:</b> ${item.extras.map((extra) => escapeHtml(extraName(extra))).join(' · ')}</small>` : ''}${item.note ? `<small class="bocc-waiter-order__prep"><b>${escapeHtml(et().preparationNote)}:</b> ${escapeHtml(item.note)}</small>` : ''}</li>`).join('')}</ul>
               ${order.note ? `<p class="bocc-waiter-order__note"><strong>${state.lang === 'es' ? 'Nota' : 'Note'}:</strong> ${escapeHtml(order.note)}</p>` : ''}
               <div class="bocc-waiter-order__actions">${[
                 ['accepted', state.lang === 'es' ? 'Aceptar' : 'Accept'],
@@ -696,7 +801,8 @@
       const target = dialog('product');
       const quantity = Math.max(1, Math.min(12, Number(target.querySelector('[data-field="product-quantity"]')?.value || 1)));
       const note = target.querySelector('[data-field="product-note"]')?.value.trim() || '';
-      addProduct(productId, quantity, note);
+      const extraIds = [...target.querySelectorAll('[data-field="product-extra"]:checked')].map((input) => input.value);
+      addProduct(productId, quantity, note, extraIds);
       closeDialog(target);
     } else if (action === 'ask-product') {
       closeDialog(button.closest('dialog'));
@@ -706,15 +812,16 @@
       renderCartDialog();
       openDialog('cart');
     } else if (action === 'increase' || action === 'decrease') {
-      const current = state.cart.get(productId);
+      const lineId = button.dataset.line;
+      const current = state.cart.get(lineId);
       if (!current) return;
       current.quantity += action === 'increase' ? 1 : -1;
-      if (current.quantity <= 0) state.cart.delete(productId);
-      else state.cart.set(productId, current);
+      if (current.quantity <= 0) state.cart.delete(lineId);
+      else state.cart.set(lineId, current);
       renderCartBar();
       renderCartDialog();
     } else if (action === 'remove') {
-      state.cart.delete(productId);
+      state.cart.delete(button.dataset.line);
       renderCartBar();
       renderCartDialog();
     } else if (action === 'simulate-error') {
@@ -768,6 +875,10 @@
       renderCategories();
       renderProducts();
     }
+  });
+
+  app.addEventListener('change', (event) => {
+    if (event.target.matches('[data-field="product-extra"]')) updateExtraSummary();
   });
 
   app.addEventListener('keydown', (event) => {
