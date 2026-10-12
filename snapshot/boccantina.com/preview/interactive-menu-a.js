@@ -3,17 +3,17 @@
   if (variant !== 'a') return;
 
   const images = {
-    starter: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-1.webp',
-    burger: '/wp-content/uploads/2026/05/BURGUER.webp',
-    burgerAlt: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-2.webp',
-    minis: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/MINIS.webp',
-    bocas: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-3.webp',
-    pizza: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/OVEN.webp',
-    drink1: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-1.webp',
-    drink2: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-2.webp',
-    drink3: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-3.webp',
-    drink4: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-4.webp',
-    wine: '/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-5.webp'
+    starter: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-1.webp',
+    burger: 'wp-content/uploads/2026/05/BURGUER.webp',
+    burgerAlt: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-2.webp',
+    minis: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/MINIS.webp',
+    bocas: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-3.webp',
+    pizza: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/OVEN.webp',
+    drink1: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-1.webp',
+    drink2: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-2.webp',
+    drink3: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-3.webp',
+    drink4: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-4.webp',
+    wine: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-5.webp'
   };
 
   const categories = [

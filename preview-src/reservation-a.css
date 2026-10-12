@@ -202,7 +202,7 @@ body[data-boccantina-reservation="a"] :focus-visible {
   border: 1px solid var(--reservation-border);
   background:
     linear-gradient(180deg, rgba(14, 12, 15, 0.12), rgba(14, 12, 15, 0.95)),
-    url("/wp-content/uploads/2026/05/AERIAL-BCC.webp") center / cover;
+    url("../wp-content/uploads/2026/05/AERIAL-BCC.webp") center / cover;
   align-content: space-between;
   gap: 36px;
 }

@@ -129,7 +129,7 @@ body[data-boccantina-hero] #menu {
   position: absolute;
   z-index: -2;
   inset: 0;
-  background-image: url("/wp-content/uploads/revslider/o/9/e66f14773e38045d2da5c094a8356f14.webp");
+  background-image: url("../wp-content/uploads/revslider/o/9/e66f14773e38045d2da5c094a8356f14.webp");
   background-position: center;
   background-size: cover;
   transform: scale(1.015);

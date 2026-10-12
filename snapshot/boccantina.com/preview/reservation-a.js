@@ -104,13 +104,13 @@
     <a class="bocc-reservation-skip" href="#bocc-reservation-form">Ir a la reservación</a>
     <div class="bocc-reservation-shell">
       <header class="bocc-reservation-header">
-        <a class="bocc-reservation-brand" href="/?hero=a">
+        <a class="bocc-reservation-brand" href="../?hero=a">
           <span aria-hidden="true">B</span>
           <span><strong>Boccantina</strong><small>Cantina de vinos</small></span>
         </a>
         <nav aria-label="Navegación principal">
-          <a href="/?hero=a">Inicio</a>
-          <a href="/?hero=a#bocc-menu-app">Menú</a>
+          <a href="../?hero=a">Inicio</a>
+          <a href="../?hero=a#bocc-menu-app">Menú</a>
           <a href="tel:22341380">${icon('phone')} 2234-1380</a>
         </nav>
       </header>

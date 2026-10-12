@@ -25,13 +25,13 @@ await Promise.all([
 ]);
 
 let html = await readFile(homeFile, 'utf8');
-const styleTag = '<link id="bocc-hero-styles" rel="stylesheet" href="/preview/hero-variants.css">';
-const scriptTag = '<script id="bocc-hero-script" src="/preview/hero-variants.js" defer></script>';
-const menuStyleTag = '<link id="bocc-menu-a-styles" rel="stylesheet" href="/preview/interactive-menu-a.css">';
-const adminStyleTag = '<link id="bocc-menu-admin-a-styles" rel="stylesheet" href="/preview/menu-admin-a.css">';
-const extrasConfigScriptTag = '<script id="bocc-menu-extras-config-a-script" src="/preview/menu-extras-config-a.js" defer></script>';
-const menuScriptTag = '<script id="bocc-menu-a-script" src="/preview/interactive-menu-a.js" defer></script>';
-const adminScriptTag = '<script id="bocc-menu-admin-a-script" src="/preview/menu-admin-a.js" defer></script>';
+const styleTag = '<link id="bocc-hero-styles" rel="stylesheet" href="preview/hero-variants.css">';
+const scriptTag = '<script id="bocc-hero-script" src="preview/hero-variants.js" defer></script>';
+const menuStyleTag = '<link id="bocc-menu-a-styles" rel="stylesheet" href="preview/interactive-menu-a.css">';
+const adminStyleTag = '<link id="bocc-menu-admin-a-styles" rel="stylesheet" href="preview/menu-admin-a.css">';
+const extrasConfigScriptTag = '<script id="bocc-menu-extras-config-a-script" src="preview/menu-extras-config-a.js" defer></script>';
+const menuScriptTag = '<script id="bocc-menu-a-script" src="preview/interactive-menu-a.js" defer></script>';
+const adminScriptTag = '<script id="bocc-menu-admin-a-script" src="preview/menu-admin-a.js" defer></script>';
 
 html = html.replace(/\s*<link id="bocc-hero-styles"[^>]*>/i, '');
 html = html.replace(/\s*<script id="bocc-hero-script"[^>]*><\/script>/i, '');
@@ -50,8 +50,8 @@ html = html.includes('</body>')
 await writeFile(homeFile, html, 'utf8');
 
 let reservationHtml = await readFile(reservationFile, 'utf8');
-const reservationStyleTag = '<link id="bocc-reservation-a-styles" rel="stylesheet" href="/preview/reservation-a.css">';
-const reservationScriptTag = '<script id="bocc-reservation-a-script" src="/preview/reservation-a.js" defer></script>';
+const reservationStyleTag = '<link id="bocc-reservation-a-styles" rel="stylesheet" href="../preview/reservation-a.css">';
+const reservationScriptTag = '<script id="bocc-reservation-a-script" src="../preview/reservation-a.js" defer></script>';
 
 reservationHtml = reservationHtml.replace(/\s*<link id="bocc-reservation-a-styles"[^>]*>/i, '');
 reservationHtml = reservationHtml.replace(/\s*<script id="bocc-reservation-a-script"[^>]*><\/script>/i, '');

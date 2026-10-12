@@ -14,8 +14,8 @@
       try {
         const target = new URL(link.href, window.location.href);
         const normalizedPath = target.pathname.replace(/index\.html$/i, '');
-        if (target.origin === window.location.origin && normalizedPath === '/reservaciones/') {
-          link.setAttribute('href', '/reservaciones/?hero=a');
+        if (target.origin === window.location.origin && normalizedPath.endsWith('/reservaciones/')) {
+          link.setAttribute('href', 'reservaciones/?hero=a');
         }
       } catch {
         // Ignore malformed links inherited from the mirrored WordPress page.
@@ -37,7 +37,7 @@
           <p class="bocc-hero__intro">Una invitación a descubrir Boccantina entre copas, platos para compartir y una atmósfera hecha para la noche.</p>
           <div class="bocc-hero__actions" aria-label="Acciones principales">
             <a class="bocc-button bocc-button--primary" href="#bocc-menu-app">Ver el menú interactivo</a>
-            <a class="bocc-button bocc-button--ghost" href="/reservaciones/?hero=a">Reservar mesa</a>
+            <a class="bocc-button bocc-button--ghost" href="reservaciones/?hero=a">Reservar mesa</a>
           </div>
         </div>
         <div class="bocc-hero__signature" aria-label="Concepto de la propuesta">
@@ -53,18 +53,18 @@
           <h1 id="bocc-hero-b-title">Nos vemos en Boccantina.</h1>
           <p class="bocc-hero__intro">Un punto de encuentro en Belén para compartir la mesa, brindar y dejar que la noche marque el ritmo.</p>
           <div class="bocc-hero__actions" aria-label="Acciones principales">
-            <a class="bocc-button bocc-button--gold" href="/reservaciones/">Reservar mesa</a>
+            <a class="bocc-button bocc-button--gold" href="reservaciones/">Reservar mesa</a>
             <a class="bocc-button bocc-button--line" href="#menu">Explorar el menú</a>
           </div>
           <p class="bocc-hero-b__variant">Propuesta B · Composición arquitectónica</p>
         </div>
         <div class="bocc-hero-b__visual" aria-label="Ambiente y propuesta gastronómica de Boccantina">
-          <img class="bocc-hero-b__main" src="/wp-content/uploads/2026/05/AERIAL-BCC.webp" alt="Vista superior del salón de Boccantina" width="1600" height="2000">
+          <img class="bocc-hero-b__main" src="wp-content/uploads/2026/05/AERIAL-BCC.webp" alt="Vista superior del salón de Boccantina" width="1600" height="2000">
           <figure class="bocc-hero-b__detail bocc-hero-b__detail--drink">
-            <img src="/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-2.webp" alt="Cóctel servido con hielo personalizado de Boccantina" width="350" height="350">
+            <img src="wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/DRINK-2.webp" alt="Cóctel servido con hielo personalizado de Boccantina" width="350" height="350">
           </figure>
           <figure class="bocc-hero-b__detail bocc-hero-b__detail--food">
-            <img src="/wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-2.webp" alt="Hamburguesa de la propuesta gastronómica de Boccantina" width="350" height="350">
+            <img src="wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-2.webp" alt="Hamburguesa de la propuesta gastronómica de Boccantina" width="350" height="350">
           </figure>
         </div>
       </div>`;
