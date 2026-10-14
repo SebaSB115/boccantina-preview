@@ -43,6 +43,7 @@
     preferences: '',
     errors: {},
     confirmed: false,
+    reference: '',
     showOperations: false,
     operationStatus: 'pending'
   };
@@ -126,7 +127,7 @@
             <div>${icon('edit')}<span><strong>Revisión antes de enviar</strong><small>Todo se puede corregir desde el resumen.</small></span></div>
             <div>${icon('shield')}<span><strong>Datos mínimos y claros</strong><small>Solo lo necesario para gestionar la solicitud.</small></span></div>
           </div>
-          <p class="bocc-reservation-demo-note"><strong>Maquetado local:</strong> los horarios, el envío y la confirmación son simulados. No se conecta con producción.</p>
+          <p class="bocc-reservation-demo-note"><strong>Prueba local:</strong> las solicitudes se guardan en la central de este prototipo. No se conecta con producción.</p>
         </aside>
         <section class="bocc-reservation-card" id="bocc-reservation-form" aria-labelledby="bocc-reservation-card-title">
           <div class="bocc-reservation-card__top">
@@ -170,7 +171,7 @@
   function renderStepOne() {
     return `${renderErrorSummary()}
       <div class="bocc-reservation-form" role="form" aria-labelledby="bocc-step-one-title">
-        <div class="bocc-step-heading" tabindex="-1" data-region="step-heading"><span>Paso 1 de 3</span><h3 id="bocc-step-one-title">¿Cuándo nos visitas?</h3><p>Selecciona una fecha, el tamaño del grupo y un horario de demostración.</p></div>
+        <div class="bocc-step-heading" tabindex="-1" data-region="step-heading"><span>Paso 1 de 3</span><h3 id="bocc-step-one-title">¿Cuándo nos visitas?</h3><p>Selecciona una fecha, el tamaño del grupo y un horario. La mesa la asignará administración para evitar cruces.</p></div>
         <fieldset class="bocc-choice-group" id="bocc-date" tabindex="-1" ${errorAttributes('date')}>
           <legend>Fecha <span>Obligatorio</span></legend>
           <div class="bocc-date-options">
@@ -230,8 +231,8 @@
       <div class="bocc-step-heading" tabindex="-1" data-region="step-heading"><span>Paso 3 de 3</span><h3>Revisa antes de enviar</h3><p>Confirma que la fecha, hora y datos de contacto sean correctos.</p></div>
       ${summaryRows()}
       <div class="bocc-review-edit"><button type="button" data-action="edit-availability">${icon('edit')} Editar disponibilidad</button><button type="button" data-action="edit-details">${icon('edit')} Editar datos</button></div>
-      <div class="bocc-prototype-notice">${icon('shield')}<p><strong>Esta acción es una simulación.</strong><span>No enviará información a Boccantina ni creará una reserva real.</span></p></div>
-      <div class="bocc-form-actions"><button class="bocc-secondary-action" type="button" data-action="back">${icon('back')} Volver</button><button class="bocc-primary-action" type="button" data-action="confirm">Simular reservación ${icon('check')}</button></div>
+      <div class="bocc-prototype-notice">${icon('shield')}<p><strong>Se enviará sin una mesa asignada.</strong><span>Administración revisará la disponibilidad, asignará la mesa y luego podrá confirmar la solicitud. No llegará al restaurante en producción.</span></p></div>
+      <div class="bocc-form-actions"><button class="bocc-secondary-action" type="button" data-action="back">${icon('back')} Volver</button><button class="bocc-primary-action" type="button" data-action="confirm">Enviar solicitud ${icon('check')}</button></div>
     </div>`;
   }
 
@@ -239,14 +240,13 @@
     const statusText = state.operationStatus === 'confirmed' ? 'Confirmada en la simulación' : 'Pendiente de confirmar';
     return `<div class="bocc-confirmation" tabindex="-1" data-region="step-heading">
       <div class="bocc-confirmation__icon">${icon('check')}</div>
-      <p class="bocc-confirmation__eyebrow">Así se vería la confirmación</p>
+      <p class="bocc-confirmation__eyebrow">Solicitud guardada en la central local</p>
       <h3>Solicitud recibida</h3>
-      <p>La experiencia real mostraría aquí el estado y enviaría los detalles por correo o mensaje.</p>
-      <div class="bocc-confirmation__reference"><span>Referencia demostrativa</span><strong>BOC-DEMO-1042</strong><b>${statusText}</b></div>
+      <p>Administración ya puede verla, asignarle una mesa y confirmarla o cancelarla desde el panel del prototipo.</p>
+      <div class="bocc-confirmation__reference"><span>Referencia</span><strong>${escapeHtml(state.reference)}</strong><b>${statusText}</b></div>
       ${summaryRows()}
-      <div class="bocc-prototype-notice">${icon('shield')}<p><strong>No se envió ningún dato.</strong><span>Esta confirmación existe solo dentro del preview local.</span></p></div>
-      <div class="bocc-form-actions bocc-form-actions--confirmation"><button class="bocc-secondary-action" type="button" data-action="new-reservation">Nueva simulación</button><button class="bocc-primary-action" type="button" data-action="toggle-operations">${state.showOperations ? 'Ocultar vista operativa' : 'Ver cómo llega al restaurante'} ${icon('arrow')}</button></div>
-      ${state.showOperations ? renderOperations() : ''}
+      <div class="bocc-prototype-notice">${icon('shield')}<p><strong>Mesa pendiente de asignación.</strong><span>La elección la realiza administración para evitar que dos solicitudes ocupen la misma mesa. Este registro no modifica la agenda real.</span></p></div>
+      <div class="bocc-form-actions bocc-form-actions--confirmation"><button class="bocc-secondary-action" type="button" data-action="new-reservation">Nueva reservación</button><a class="bocc-primary-action" href="../admin/pedidos/">Ver en administración ${icon('arrow')}</a></div>
     </div>`;
   }
 
@@ -323,7 +323,7 @@
       render({ focusHeading: true });
   }
 
-  app.addEventListener('click', (event) => {
+  app.addEventListener('click', async (event) => {
     const errorLink = event.target.closest('.bocc-error-summary a');
     if (errorLink) {
       const target = document.querySelector(errorLink.hash);
@@ -362,9 +362,20 @@
       return render({ focusHeading: true });
     }
     if (action === 'confirm') {
-      state.confirmed = true;
-      state.showOperations = false;
-      return render({ focusHeading: true });
+      trigger.disabled = true;
+      try {
+        const response = await fetch('../api/reservations', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ date: state.date, time: state.time, guests: state.guests, occasion: state.occasion, name: state.name, phone: state.phone, email: state.email, preferences: state.preferences, source: 'web' }) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'No se pudo guardar la reservación.');
+        state.reference = data.reservation.code;
+        state.confirmed = true;
+        state.showOperations = false;
+        return render({ focusHeading: true });
+      } catch (error) {
+        trigger.disabled = false;
+        window.alert(error.message);
+        return;
+      }
     }
     if (action === 'toggle-operations') {
       state.showOperations = !state.showOperations;
@@ -388,6 +399,7 @@
         preferences: '',
         errors: {},
         confirmed: false,
+        reference: '',
         showOperations: false,
         operationStatus: 'pending'
       });

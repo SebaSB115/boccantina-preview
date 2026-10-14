@@ -11,6 +11,7 @@
     "serve": "node scripts/serve.mjs"
   },
   "dependencies": {
+    "qrcode": "^1.5.4",
     "website-scraper": "6.0.0"
   }
 }

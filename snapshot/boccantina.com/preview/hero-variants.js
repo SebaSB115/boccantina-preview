@@ -37,7 +37,7 @@
           <h1 id="bocc-hero-a-title">Vino, cocina y una mesa para quedarse.</h1>
           <p class="bocc-hero__intro">Una invitación a descubrir Boccantina entre copas, platos para compartir y una atmósfera hecha para la noche.</p>
           <div class="bocc-hero__actions" aria-label="Acciones principales">
-            <a class="bocc-button bocc-button--primary" href="#bocc-menu-app">Ver el menú interactivo</a>
+            <a class="bocc-button bocc-button--primary" href="carta/?hero=a">Ver el menú</a>
             <a class="bocc-button bocc-button--ghost" href="reservaciones/?hero=a">Reservar mesa</a>
           </div>
         </div>
@@ -72,4 +72,21 @@
   }
 
   page.prepend(hero);
+
+  if (variant === 'a') {
+    document.querySelectorAll('a[href]').forEach((link) => {
+      try {
+        const target = new URL(link.href, window.location.href);
+        const isPdfMenu = target.pathname.endsWith('/wp-content/uploads/2026/09/menu.pdf');
+        const isMagazine = link.matches('._df_thumb, [data-df-option]') || link.closest('[data-title="menu2"]');
+        if (target.hash === '#menu' || isPdfMenu || isMagazine) {
+          link.setAttribute('href', 'carta/?hero=a');
+          link.removeAttribute('target');
+          link.setAttribute('aria-label', 'Abrir carta digital de Boccantina');
+        }
+      } catch {
+        // Ignore malformed links inherited from the mirrored WordPress page.
+      }
+    });
+  }
 })();

@@ -1,6 +1,6 @@
 (() => {
-  const variant = new URLSearchParams(window.location.search).get('hero')?.toLowerCase();
-  if (variant !== 'a') return;
+  const params = new URLSearchParams(window.location.search);
+  const variant = params.get('hero')?.toLowerCase();
 
   const images = {
     starter: 'wp-content/uploads/revslider/mood-board-infinite-filmstrip-media-gallery/FOOD-1.webp',
@@ -86,6 +86,9 @@
     { id: 'monkey', category: 'whisky', nameEs: 'Monkey Shoulder', nameEn: 'Monkey Shoulder', price: null, image: images.drink2, descEs: 'Disponible por trago. El PDF actual no indica el precio.', descEn: 'Available by the glass. The current PDF does not list a price.', tags: [] },
     { id: 'glenfiddich', category: 'whisky', nameEs: 'Glenfiddich 12 años', nameEn: 'Glenfiddich 12-year', price: null, image: images.drink2, descEs: 'Disponible por trago. El PDF actual no indica el precio.', descEn: 'Available by the glass. The current PDF does not list a price.', tags: [] }
   ];
+
+  window.BoccMenuCatalog = Object.freeze({ categories, products });
+  if (variant !== 'a' || params.get('embedMenu') !== '1') return;
 
   const copy = {
     es: {

@@ -49,6 +49,15 @@ function isolatePreview(documentHtml) {
 
 await mkdir(targetRoot, { recursive: true });
 await Promise.all([
+  mkdir(join(siteRoot, 'carta'), { recursive: true }),
+  mkdir(join(siteRoot, 'mesa'), { recursive: true }),
+  mkdir(join(siteRoot, 'pedido'), { recursive: true }),
+  mkdir(join(siteRoot, 'admin', 'pedidos'), { recursive: true }),
+  mkdir(join(siteRoot, 'admin', 'cocina'), { recursive: true }),
+  mkdir(join(siteRoot, 'admin', 'reservaciones'), { recursive: true }),
+  mkdir(join(siteRoot, 'qr-mesas'), { recursive: true })
+]);
+await Promise.all([
   copyFile(join(sourceRoot, 'hero-variants.css'), join(targetRoot, 'hero-variants.css')),
   copyFile(join(sourceRoot, 'hero-variants.js'), join(targetRoot, 'hero-variants.js')),
   copyFile(join(sourceRoot, 'interactive-menu-a.css'), join(targetRoot, 'interactive-menu-a.css')),
@@ -56,8 +65,18 @@ await Promise.all([
   copyFile(join(sourceRoot, 'menu-extras-config-a.js'), join(targetRoot, 'menu-extras-config-a.js')),
   copyFile(join(sourceRoot, 'menu-admin-a.css'), join(targetRoot, 'menu-admin-a.css')),
   copyFile(join(sourceRoot, 'menu-admin-a.js'), join(targetRoot, 'menu-admin-a.js')),
+  copyFile(join(sourceRoot, 'order-system-a.css'), join(targetRoot, 'order-system-a.css')),
+  copyFile(join(sourceRoot, 'order-system-a.js'), join(targetRoot, 'order-system-a.js')),
+  copyFile(join(sourceRoot, 'static-demo-api-a.js'), join(targetRoot, 'static-demo-api-a.js')),
   copyFile(join(sourceRoot, 'reservation-a.css'), join(targetRoot, 'reservation-a.css')),
-  copyFile(join(sourceRoot, 'reservation-a.js'), join(targetRoot, 'reservation-a.js'))
+  copyFile(join(sourceRoot, 'reservation-a.js'), join(targetRoot, 'reservation-a.js')),
+  copyFile(join(sourceRoot, 'order-pages', 'carta.html'), join(siteRoot, 'carta', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'mesa.html'), join(siteRoot, 'mesa', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'pedido.html'), join(siteRoot, 'pedido', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'admin-pedidos.html'), join(siteRoot, 'admin', 'pedidos', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'admin-cocina.html'), join(siteRoot, 'admin', 'cocina', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'admin-reservaciones.html'), join(siteRoot, 'admin', 'reservaciones', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'qr-mesas.html'), join(siteRoot, 'qr-mesas', 'index.html'))
 ]);
 
 let html = isolatePreview(await readFile(homeFile, 'utf8'));
@@ -65,6 +84,7 @@ const styleTag = '<link id="bocc-hero-styles" rel="stylesheet" href="preview/her
 const scriptTag = '<script id="bocc-hero-script" src="preview/hero-variants.js" defer></script>';
 const menuStyleTag = '<link id="bocc-menu-a-styles" rel="stylesheet" href="preview/interactive-menu-a.css">';
 const adminStyleTag = '<link id="bocc-menu-admin-a-styles" rel="stylesheet" href="preview/menu-admin-a.css">';
+const staticDemoScriptTag = '<script id="bocc-static-demo-api-a-script" src="preview/static-demo-api-a.js"></script>';
 const extrasConfigScriptTag = '<script id="bocc-menu-extras-config-a-script" src="preview/menu-extras-config-a.js" defer></script>';
 const menuScriptTag = '<script id="bocc-menu-a-script" src="preview/interactive-menu-a.js" defer></script>';
 const adminScriptTag = '<script id="bocc-menu-admin-a-script" src="preview/menu-admin-a.js" defer></script>';
@@ -73,6 +93,7 @@ html = html.replace(/\s*<link id="bocc-hero-styles"[^>]*>/i, '');
 html = html.replace(/\s*<script id="bocc-hero-script"[^>]*><\/script>/i, '');
 html = html.replace(/\s*<link id="bocc-menu-a-styles"[^>]*>/i, '');
 html = html.replace(/\s*<link id="bocc-menu-admin-a-styles"[^>]*>/i, '');
+html = html.replace(/\s*<script id="bocc-static-demo-api-a-script"[^>]*><\/script>/i, '');
 html = html.replace(/\s*<script id="bocc-menu-extras-config-a-script"[^>]*><\/script>/i, '');
 html = html.replace(/\s*<script id="bocc-menu-a-script"[^>]*><\/script>/i, '');
 html = html.replace(/\s*<script id="bocc-menu-admin-a-script"[^>]*><\/script>/i, '');
@@ -80,23 +101,25 @@ html = html.includes('</head>')
   ? html.replace('</head>', `${styleTag}\n${menuStyleTag}\n${adminStyleTag}\n</head>`)
   : `${styleTag}\n${menuStyleTag}\n${adminStyleTag}\n${html}`;
 html = html.includes('</body>')
-  ? html.replace('</body>', `${extrasConfigScriptTag}\n${scriptTag}\n${menuScriptTag}\n${adminScriptTag}\n</body>`)
-  : `${html}\n${extrasConfigScriptTag}\n${scriptTag}\n${menuScriptTag}\n${adminScriptTag}`;
+  ? html.replace('</body>', `${staticDemoScriptTag}\n${extrasConfigScriptTag}\n${scriptTag}\n${menuScriptTag}\n${adminScriptTag}\n</body>`)
+  : `${html}\n${staticDemoScriptTag}\n${extrasConfigScriptTag}\n${scriptTag}\n${menuScriptTag}\n${adminScriptTag}`;
 
 await writeFile(homeFile, html, 'utf8');
 
 let reservationHtml = isolatePreview(await readFile(reservationFile, 'utf8'));
 const reservationStyleTag = '<link id="bocc-reservation-a-styles" rel="stylesheet" href="../preview/reservation-a.css">';
+const reservationStaticDemoScriptTag = '<script id="bocc-static-demo-api-a-script" src="../preview/static-demo-api-a.js"></script>';
 const reservationScriptTag = '<script id="bocc-reservation-a-script" src="../preview/reservation-a.js" defer></script>';
 
 reservationHtml = reservationHtml.replace(/\s*<link id="bocc-reservation-a-styles"[^>]*>/i, '');
+reservationHtml = reservationHtml.replace(/\s*<script id="bocc-static-demo-api-a-script"[^>]*><\/script>/i, '');
 reservationHtml = reservationHtml.replace(/\s*<script id="bocc-reservation-a-script"[^>]*><\/script>/i, '');
 reservationHtml = reservationHtml.includes('</head>')
   ? reservationHtml.replace('</head>', `${reservationStyleTag}\n</head>`)
   : `${reservationStyleTag}\n${reservationHtml}`;
 reservationHtml = reservationHtml.includes('</body>')
-  ? reservationHtml.replace('</body>', `${reservationScriptTag}\n</body>`)
-  : `${reservationHtml}\n${reservationScriptTag}`;
+  ? reservationHtml.replace('</body>', `${reservationStaticDemoScriptTag}\n${reservationScriptTag}\n</body>`)
+  : `${reservationHtml}\n${reservationStaticDemoScriptTag}\n${reservationScriptTag}`;
 
 await writeFile(reservationFile, reservationHtml, 'utf8');
 console.log('Variantes de hero A/B aplicadas al preview local.');

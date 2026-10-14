@@ -12,3 +12,4 @@ reference/private/
 *.log
 .DS_Store
 Thumbs.db
+.preview-data/

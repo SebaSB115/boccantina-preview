@@ -96,6 +96,11 @@
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(normalized));
       window.dispatchEvent(new CustomEvent('bocc:extras-config', { detail: clone(normalized) }));
+      fetch('/api/config/extras', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(normalized)
+      }).catch(() => {});
       return { ok: true, config: normalized };
     } catch {
       return { ok: false, config: normalized };
@@ -110,8 +115,26 @@
     }
     const config = createDefaultConfig();
     window.dispatchEvent(new CustomEvent('bocc:extras-config', { detail: clone(config) }));
+    fetch('/api/config/extras', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(config)
+    }).catch(() => {});
     return config;
   }
 
-  window.BoccMenuExtrasConfig = Object.freeze({ storageKey, products: clone(products), defaults: createDefaultConfig, load, save, reset, normalizePrice });
+  async function hydrate() {
+    try {
+      const response = await fetch('/api/config/extras', { headers: { accept: 'application/json' } });
+      if (!response.ok) return load();
+      const normalized = normalizeConfig(await response.json());
+      window.localStorage.setItem(storageKey, JSON.stringify(normalized));
+      window.dispatchEvent(new CustomEvent('bocc:extras-config', { detail: clone(normalized) }));
+      return normalized;
+    } catch {
+      return load();
+    }
+  }
+
+  window.BoccMenuExtrasConfig = Object.freeze({ storageKey, products: clone(products), defaults: createDefaultConfig, load, save, reset, hydrate, normalizePrice });
 })();
