@@ -1,6 +1,7 @@
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import QRCode from 'qrcode';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const config = JSON.parse(await readFile(join(repoRoot, 'site.config.json'), 'utf8'));
@@ -10,6 +11,7 @@ const sourceRoot = join(repoRoot, 'preview-src');
 const targetRoot = join(siteRoot, 'preview');
 const homeFile = join(siteRoot, 'index.html');
 const reservationFile = join(siteRoot, 'reservaciones', 'index.html');
+const publicPreviewBase = 'https://sebasb115.github.io/boccantina-preview';
 
 const previewCsp = [
   "default-src 'self' data: blob:",
@@ -55,7 +57,8 @@ await Promise.all([
   mkdir(join(siteRoot, 'admin', 'pedidos'), { recursive: true }),
   mkdir(join(siteRoot, 'admin', 'cocina'), { recursive: true }),
   mkdir(join(siteRoot, 'admin', 'reservaciones'), { recursive: true }),
-  mkdir(join(siteRoot, 'qr-mesas'), { recursive: true })
+  mkdir(join(siteRoot, 'qr-mesas'), { recursive: true }),
+  mkdir(join(targetRoot, 'qr'), { recursive: true })
 ]);
 await Promise.all([
   copyFile(join(sourceRoot, 'hero-variants.css'), join(targetRoot, 'hero-variants.css')),
@@ -78,6 +81,18 @@ await Promise.all([
   copyFile(join(sourceRoot, 'order-pages', 'admin-reservaciones.html'), join(siteRoot, 'admin', 'reservaciones', 'index.html')),
   copyFile(join(sourceRoot, 'order-pages', 'qr-mesas.html'), join(siteRoot, 'qr-mesas', 'index.html'))
 ]);
+
+await Promise.all(Array.from({ length: 12 }, async (_, index) => {
+  const table = index + 1;
+  const svg = await QRCode.toString(`${publicPreviewBase}/mesa/?mesa=${table}#menu`, {
+    type: 'svg',
+    errorCorrectionLevel: 'M',
+    margin: 4,
+    width: 640,
+    color: { dark: '#000000', light: '#ffffff' }
+  });
+  await writeFile(join(targetRoot, 'qr', `mesa-${table}.svg`), svg, 'utf8');
+}));
 
 let html = isolatePreview(await readFile(homeFile, 'utf8'));
 const styleTag = '<link id="bocc-hero-styles" rel="stylesheet" href="preview/hero-variants.css">';

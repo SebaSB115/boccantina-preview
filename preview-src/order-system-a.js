@@ -4,6 +4,7 @@
   if (!page || !root) return;
   const appUrl = window.BoccStaticDemo?.appUrl || ((path = '/') => path);
   const isStaticDemo = Boolean(window.BoccStaticDemo?.enabled);
+  const brandLogoUrl = appUrl('/wp-content/uploads/2026/05/cropped-LOGO-NEW-300x72.jpg');
 
   const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
   const normalize = (value = '') => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -15,6 +16,7 @@
   const iconBag = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14l-1 13H6L5 8Z"></path><path d="M9 9V6a3 3 0 0 1 6 0v3"></path></svg>';
   const iconCounter = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10h16v10H4zM7 10V5h10v5"></path><path d="M8 14h3m5 0h1m-9 3h9"></path></svg>';
   const iconCalendar = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4m8-4v4M3 10h18"></path><path d="M8 14h3m2 0h3m-8 3h3"></path></svg>';
+  const iconChevron = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>';
 
   async function request(path, options = {}) {
     const response = await fetch(path, {
@@ -29,7 +31,7 @@
   function header({ table = null, internal = false, context = null, centralLink = page === 'qr' } = {}) {
     return `<header class="order-header${centralLink ? ' order-header--with-back' : ''}">
       <a class="order-brand" href="${appUrl(internal ? '/admin/pedidos/' : '/?hero=a')}">
-        <span class="order-brand__mark">B</span><span><strong>BOCCANTINA</strong><small>Cantina de vinos</small></span>
+        <img class="order-brand__logo" src="${brandLogoUrl}" alt="Boccantina Cantina de Vinos" width="300" height="72" fetchpriority="high" decoding="async">
       </a>
       <div class="order-header__meta">
         ${centralLink ? `<a class="header-back-link" href="${appUrl('/admin/pedidos/')}" aria-label="Volver a la central del restaurante"><span aria-hidden="true">←</span><span class="header-back-link__long">Volver a la central</span><span class="header-back-link__short">Central</span></a>` : ''}
@@ -143,9 +145,13 @@
         </aside>
       </section>
       ${ordering && !isTable && !internalMode ? '<section class="order-tracking-entry"><div><p class="order-eyebrow">Seguimiento y ayuda</p><strong>¿Ya hiciste un pedido?</strong><span>Recupéralo con la referencia y el código de retiro, incluso desde otro dispositivo.</span></div><button class="secondary-button" type="button" data-open-tracker>Consultar mi pedido</button></section>' : ''}
-      <section class="menu-toolbar" aria-label="Herramientas de la carta">
+      <section class="menu-toolbar" id="menu" aria-label="Herramientas de la carta">
         <label class="menu-search"><span class="sr-only">Buscar platos</span>${iconSearch}<input type="search" name="menu-search" placeholder="Buscar plato o ingrediente…" data-search></label>
-        <nav class="category-tabs" aria-label="Categorías" data-categories></nav>
+        <div class="category-scroller">
+          <button class="category-scroller__control category-scroller__control--previous" type="button" data-category-scroll="-1" aria-label="Ver categorías anteriores">${iconChevron}</button>
+          <nav class="category-tabs" aria-label="Categorías" data-categories tabindex="0"></nav>
+          <button class="category-scroller__control category-scroller__control--next" type="button" data-category-scroll="1" aria-label="Ver más categorías">${iconChevron}</button>
+        </div>
       </section>
       <section class="menu-content">
         <header class="menu-heading"><div><h2 data-category-title></h2><p data-category-description></p></div><span data-results></span></header>
@@ -186,8 +192,34 @@
       return products.filter((product) => product.category === state.category);
     }
 
-    function renderCategories() {
-      el('[data-categories]').innerHTML = categories.map((category) => `<button type="button" data-category="${category.id}" aria-pressed="${!state.query && state.category === category.id}">${escapeHtml(category.es)}</button>`).join('');
+    function updateCategoryScrollControls() {
+      const tabs = el('[data-categories]');
+      if (!tabs) return;
+      const maximum = Math.max(0, tabs.scrollWidth - tabs.clientWidth);
+      const previous = el('[data-category-scroll="-1"]');
+      const next = el('[data-category-scroll="1"]');
+      previous.disabled = maximum < 2 || tabs.scrollLeft <= 2;
+      next.disabled = maximum < 2 || tabs.scrollLeft >= maximum - 2;
+      tabs.dataset.overflow = maximum >= 2 ? 'true' : 'false';
+    }
+
+    function renderCategories({ revealActive = false } = {}) {
+      const tabs = el('[data-categories]');
+      const previousScroll = tabs.scrollLeft;
+      tabs.innerHTML = categories.map((category) => `<button type="button" data-category="${category.id}" aria-pressed="${!state.query && state.category === category.id}">${escapeHtml(category.es)}</button>`).join('');
+      requestAnimationFrame(() => {
+        const active = !state.query && tabs.querySelector('[aria-pressed="true"]');
+        if (active && revealActive) {
+          const targetLeft = active.offsetLeft - ((tabs.clientWidth - active.offsetWidth) / 2);
+          tabs.scrollTo({
+            left: Math.max(0, targetLeft),
+            behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+          });
+        } else {
+          tabs.scrollLeft = previousScroll;
+        }
+        updateCategoryScrollControls();
+      });
     }
 
     function renderProducts() {
@@ -210,7 +242,7 @@
         const categoryNumber = String(categories.findIndex((item) => item.id === group.category.id) + 1).padStart(2, '0');
         return `<article class="menu-spread" aria-labelledby="menu-spread-${escapeHtml(group.category.id)}">
           <figure class="menu-spread__visual">
-            <img src="${escapeHtml(productImage(heroProduct))}" alt="Presentación de ${escapeHtml(group.category.es)}" width="720" height="960" ${groupIndex ? 'loading="lazy"' : ''}>
+            <img src="${escapeHtml(productImage(heroProduct))}" alt="Presentación de ${escapeHtml(group.category.es)}" width="720" height="960" decoding="async" ${groupIndex ? 'loading="lazy"' : 'fetchpriority="high"'}>
             <figcaption><span>Carta Boccantina</span><strong>${escapeHtml(group.category.es)}</strong><small>${categoryNumber}</small></figcaption>
           </figure>
           <section class="menu-spread__catalog">
@@ -408,6 +440,15 @@
       renderProducts();
     });
     root.addEventListener('click', async (event) => {
+      const categoryScroll = event.target.closest('[data-category-scroll]');
+      if (categoryScroll) {
+        const tabs = el('[data-categories]');
+        tabs.scrollBy({
+          left: Number(categoryScroll.dataset.categoryScroll) * Math.max(220, tabs.clientWidth * .72),
+          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+        });
+        return;
+      }
       const orderMode = event.target.closest('[data-order-mode]');
       if (orderMode && state.cart.length && !window.confirm('Cambiar el tipo de pedido vaciará los productos agregados. ¿Deseas continuar?')) { event.preventDefault(); return; }
       if (event.target.closest('[data-open-tracker]')) { el('[data-tracker-dialog]').showModal(); return; }
@@ -416,7 +457,7 @@
         state.category = category.dataset.category;
         state.query = '';
         el('[data-search]').value = '';
-        renderCategories();
+        renderCategories({ revealActive: true });
         renderProducts();
         el('.menu-heading').scrollIntoView({
           behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
@@ -466,7 +507,11 @@
         catch { try { localStorage.removeItem(trackingStorageKey); } catch { /* Ignore unavailable storage. */ } }
       }
     }
-    renderCategories(); renderProducts(); renderCartDock();
+    const categoryTabs = el('[data-categories]');
+    categoryTabs.addEventListener('scroll', updateCategoryScrollControls, { passive: true });
+    window.addEventListener('resize', updateCategoryScrollControls, { passive: true });
+    renderCategories({ revealActive: true }); renderProducts(); renderCartDock();
+    if (location.hash === '#menu') requestAnimationFrame(() => el('#menu').scrollIntoView({ block: 'start' }));
   }
 
   function receipt(order) {
@@ -860,11 +905,11 @@
         defaultBase = defaultBase.replace(/\/$/, '');
       } catch { /* Keep localhost as an editable fallback. */ }
     }
-    root.innerHTML = `<main class="order-shell">${header({ internal: true })}<section class="order-hero qr-hero"><div><p class="order-eyebrow">Operación del restaurante</p><h1>Cada pedido, bien identificado.</h1><p class="order-hero__intro">Gestiona mesas, pedidos para llevar y órdenes tomadas en caja desde el mismo sistema.</p></div><aside class="order-hero__aside"><strong>Estado en tiempo real</strong><p>Una mesa se apaga cuando el cliente abre su sesión. Los otros canales funcionan aunque todo el salón esté ocupado.</p></aside></section><section class="order-channels" aria-labelledby="order-channels-title"><header><p class="order-eyebrow">Otros medios de pedido</p><h2 id="order-channels-title">Atiende sin depender de una mesa</h2></header><div><article>${iconBag}<span><strong>Para llevar</strong><small>Enlace para el cliente que retira su pedido.</small></span><a class="primary-button" href="${appUrl('/pedido/?tipo=takeaway')}">Abrir carta</a></article><article>${iconCounter}<span><strong>Pedido en caja</strong><small>Para que el personal registre una orden presencial.</small></span><a class="secondary-button" href="${appUrl('/pedido/?tipo=counter')}">Crear pedido</a></article></div></section><form class="qr-controls" data-qr-form><label>Dirección del sistema<input type="url" name="base" value="${escapeHtml(defaultBase)}" required></label><label>Cantidad de mesas<input type="number" name="count" value="12" min="1" max="100" required></label><button class="primary-button" type="submit">Actualizar mesas</button></form><section class="qr-status" aria-label="Resumen de mesas"><div><strong data-available-count>0</strong><span>Disponibles</span></div><div><strong data-occupied-count>0</strong><span>Ocupadas</span></div><p data-qr-feedback role="status" aria-live="polite"></p></section><section class="qr-workspace"><div class="table-selector"><header><p class="order-eyebrow">Selector del salón</p><h2>Gestiona cada mesa</h2><p>Selecciona una mesa para ver su QR o liberarla cuando el cliente se retire.</p></header><div class="table-selector__grid" data-table-selector></div></div><aside class="qr-preview" data-qr-preview></aside></section><section class="qr-print-card" data-qr-print aria-hidden="true"></section></main>`;
+    root.innerHTML = `<main class="order-shell">${header({ internal: true })}<section class="order-hero qr-hero"><div><p class="order-eyebrow">Operación del restaurante</p><h1>Cada pedido, bien identificado.</h1><p class="order-hero__intro">Gestiona mesas, pedidos para llevar y órdenes tomadas en caja desde el mismo sistema.</p></div><aside class="order-hero__aside"><strong>Estado en tiempo real</strong><p>Una mesa se apaga cuando el cliente abre su sesión. Los otros canales funcionan aunque todo el salón esté ocupado.</p></aside></section><section class="order-channels" aria-labelledby="order-channels-title"><header><p class="order-eyebrow">Otros medios de pedido</p><h2 id="order-channels-title">Atiende sin depender de una mesa</h2></header><div><article>${iconBag}<span><strong>Para llevar</strong><small>Enlace para el cliente que retira su pedido.</small></span><a class="primary-button" href="${appUrl('/pedido/?tipo=takeaway')}">Abrir carta</a></article><article>${iconCounter}<span><strong>Pedido en caja</strong><small>Para que el personal registre una orden presencial.</small></span><a class="secondary-button" href="${appUrl('/pedido/?tipo=counter')}">Crear pedido</a></article></div></section><form class="qr-controls" data-qr-form><label>Dirección del sistema<input type="url" name="base" value="${escapeHtml(defaultBase)}" ${isStaticDemo ? 'readonly' : ''} required></label><label>Cantidad de mesas<input type="number" name="count" value="12" min="1" max="${isStaticDemo ? 12 : 100}" required></label><button class="primary-button" type="submit">Actualizar mesas</button></form><section class="qr-status" aria-label="Resumen de mesas"><div><strong data-available-count>0</strong><span>Disponibles</span></div><div><strong data-occupied-count>0</strong><span>Ocupadas</span></div><p data-qr-feedback role="status" aria-live="polite"></p></section><section class="qr-workspace"><div class="table-selector"><header><p class="order-eyebrow">Selector del salón</p><h2>Gestiona cada mesa</h2><p>Selecciona una mesa para ver su QR o liberarla cuando el cliente se retire.</p></header><div class="table-selector__grid" data-table-selector></div></div><aside class="qr-preview" data-qr-preview></aside></section><section class="qr-print-card" data-qr-print aria-hidden="true"></section></main>`;
     const form = root.querySelector('[data-qr-form]');
     const state = { tables: [], selected: null, count: 12, base: defaultBase };
 
-    function tableUrl(table) { return `${state.base}/mesa/?mesa=${table}`; }
+    function tableUrl(table) { return `${state.base}/mesa/?mesa=${table}#menu`; }
 
     function renderPreview() {
       const preview = root.querySelector('[data-qr-preview]');
@@ -881,9 +926,8 @@
         return;
       }
       const url = tableUrl(selected.table);
-      const demoQr = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 260"><rect width="260" height="260" fill="#fff"/><rect x="18" y="18" width="224" height="224" fill="none" stroke="#111" stroke-width="10"/><path d="M42 42h54v54H42zm122 0h54v54h-54zM42 164h54v54H42zm82-42h22v22h-22zm40 0h54v22h-54zm-40 42h22v54h-22zm40 0h54v54h-54z" fill="#111"/><text x="130" y="137" text-anchor="middle" font-family="Arial" font-size="14" font-weight="700">QR DEMO</text></svg>`)}`;
-      const qrSource = isStaticDemo ? demoQr : appUrl(`/api/qr?url=${encodeURIComponent(url)}`);
-      const card = `<div class="qr-card"><span class="qr-card__monogram">B</span><p class="qr-card__brand">BOCCANTINA<small>Cantina de vinos</small></p><span class="qr-card__table">MESA ${selected.table}</span><img src="${qrSource}" alt="${isStaticDemo ? 'Representación del QR de demostración' : `Código QR para ordenar desde la mesa ${selected.table}`}" width="260" height="260"><strong>${isStaticDemo ? 'DEMO · ABRIR MENÚ' : 'ESCANEA PARA ORDENAR'}</strong><small class="qr-card__hint">${isStaticDemo ? 'Usa el botón Abrir menú para probar esta mesa.' : 'La mesa se identificará automáticamente.'}</small></div>`;
+      const qrSource = isStaticDemo ? appUrl(`/preview/qr/mesa-${selected.table}.svg`) : appUrl(`/api/qr?url=${encodeURIComponent(url)}`);
+      const card = `<div class="qr-card"><img class="qr-card__logo" src="${brandLogoUrl}" alt="Boccantina Cantina de Vinos" width="300" height="72"><span class="qr-card__table">MESA ${selected.table}</span><img class="qr-card__code" src="${qrSource}" alt="Código QR para ordenar desde la mesa ${selected.table}" width="640" height="640"><strong>ESCANEA PARA ORDENAR</strong><small class="qr-card__hint">La mesa se identificará automáticamente.</small></div>`;
       preview.innerHTML = `<p class="order-eyebrow">Vista previa seleccionada</p>${card}<div class="qr-preview__actions"><a class="primary-button" href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir menú</a><button class="secondary-button" type="button" data-copy-link>Copiar enlace</button><button class="secondary-button" type="button" data-print-qr>Imprimir QR</button></div>`;
       print.innerHTML = card;
     }
@@ -913,7 +957,7 @@
       const submit = form.querySelector('button[type="submit"]');
       const data = new FormData(form);
       state.base = String(data.get('base')).replace(/\/$/, '');
-      state.count = Math.max(1, Math.min(100, Number(data.get('count')) || 1));
+      state.count = Math.max(1, Math.min(isStaticDemo ? 12 : 100, Number(data.get('count')) || 1));
       submit.disabled = true;
       try { await refreshTables({ announce: true }); }
       catch (error) { root.querySelector('[data-qr-feedback]').textContent = error.message; }
