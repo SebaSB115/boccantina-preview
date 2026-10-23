@@ -8,7 +8,11 @@
     "mirror": "node scripts/mirror.mjs && node scripts/fix-menus.mjs && node scripts/apply-hero-variants.mjs",
     "fix:menus": "node scripts/fix-menus.mjs",
     "apply:heroes": "node scripts/apply-hero-variants.mjs",
-    "serve": "node scripts/serve.mjs"
+    "serve": "node scripts/serve.mjs",
+    "admin:setup": "node scripts/setup-admin.mjs",
+    "check:admin": "node scripts/check-admin.mjs",
+    "check:mixed-orders": "node scripts/check-mixed-orders.mjs",
+    "check:catalog-ops": "node scripts/check-catalog-ops.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",

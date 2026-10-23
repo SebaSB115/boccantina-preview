@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#f5f6f4" />
+  <title>Acceso administrativo · Boccantina</title>
+  <link rel="stylesheet" href="/preview/admin-entry.css" />
+  <script src="./app.js" defer></script>
+</head>
+<body class="admin-entry entry-page">
+  <a class="entry-skip" href="#acceso">Ir al formulario</a>
+  <main class="entry-login" id="acceso" tabindex="-1">
+    <a class="entry-back back-link" href="http://127.0.0.1:4180/central/">← Cambiar restaurante</a>
+    <div class="entry-login__body">
+      <div class="entry-brand">
+        <span class="entry-brand__logo entry-brand__logo--boccantina"><img src="/preview/assets/boccantina-logo-transparent.png" alt="Boccantina, cantina de vinos" width="401" height="98" /></span>
+      </div>
+      <h1 class="entry-kicker">ACCESO PRIVADO</h1>
+      <form class="entry-form" id="login-form">
+        <div class="entry-field"><label for="username">Usuario</label><input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="80" required /></div>
+        <div class="entry-field"><label for="password">Contraseña</label><div class="entry-password"><input id="password" name="password" type="password" autocomplete="current-password" maxlength="256" required /><button id="show-password" type="button" aria-controls="password" aria-pressed="false">Mostrar</button></div></div>
+        <p id="login-error" class="entry-error" role="alert" aria-live="polite"></p>
+        <button class="entry-button" type="submit">Entrar a Boccantina <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="entry-foot">Vista previa local · Los cambios no se publican en producción.</p>
+    </div>
+  </main>
+</body>
+</html>

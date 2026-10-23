@@ -1,0 +1,73 @@
+/* The desktop browser can report a CSS viewport larger than its visible window.
+   In that case keep every administrative view and its scrollbars on screen. */
+html.bocc-admin-viewport-clipped,
+html[data-boccantina-admin="extras"].bocc-admin-viewport-clipped {
+  overflow: hidden !important;
+  scrollbar-gutter: auto;
+}
+
+html.bocc-admin-viewport-clipped body {
+  overflow: hidden !important;
+}
+
+html.bocc-admin-viewport-clipped :is(.admin-shell, .bocc-admin-shell, body[data-order-page="qr"] .order-shell) {
+  box-sizing: border-box;
+  width: min(100%, calc(var(--bocc-admin-visible-width) - 16px));
+  height: var(--bocc-admin-visible-height);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #d6ac63 #17191c;
+  scrollbar-width: auto;
+}
+
+html.bocc-admin-viewport-clipped [data-admin-viewport-focus]:focus-visible {
+  outline: 2px solid #d6ac63;
+  outline-offset: -2px;
+}
+
+html.bocc-admin-viewport-clipped .bocc-admin-layout {
+  min-height: 0;
+}
+
+html.bocc-admin-viewport-clipped .admin-drawer,
+html.bocc-admin-viewport-clipped body[data-boccantina-admin="extras"] .admin-drawer {
+  height: var(--bocc-admin-visible-height);
+  max-height: var(--bocc-admin-visible-height);
+}
+
+html.bocc-admin-viewport-clipped .admin-nav-backdrop {
+  width: var(--bocc-admin-visible-width);
+  height: var(--bocc-admin-visible-height);
+}
+
+html.bocc-admin-viewport-clipped :is(.order-dialog, .staff-dialog) {
+  position: fixed;
+  top: 12px;
+  bottom: auto;
+  left: calc(var(--bocc-admin-visible-width) / 2);
+  right: auto;
+  width: min(620px, calc(var(--bocc-admin-visible-width) - 24px));
+  max-height: calc(var(--bocc-admin-visible-height) - 24px);
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+html.bocc-admin-viewport-clipped .staff-dialog {
+  width: min(680px, calc(var(--bocc-admin-visible-width) - 24px));
+}
+
+html.bocc-admin-viewport-clipped .staff-dialog form {
+  max-height: calc(var(--bocc-admin-visible-height) - 24px);
+}
+
+@media print {
+  html.bocc-admin-viewport-clipped,
+  html.bocc-admin-viewport-clipped body { overflow: visible !important; }
+  html.bocc-admin-viewport-clipped :is(.admin-shell, .bocc-admin-shell, body[data-order-page="qr"] .order-shell) {
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+}

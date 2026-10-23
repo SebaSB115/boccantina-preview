@@ -57,7 +57,10 @@ await Promise.all([
   mkdir(join(siteRoot, 'admin', 'pedidos'), { recursive: true }),
   mkdir(join(siteRoot, 'admin', 'cocina'), { recursive: true }),
   mkdir(join(siteRoot, 'admin', 'reservaciones'), { recursive: true }),
+  mkdir(join(siteRoot, 'admin', 'extras'), { recursive: true }),
+  mkdir(join(siteRoot, 'admin', 'disponibilidad'), { recursive: true }),
   mkdir(join(siteRoot, 'qr-mesas'), { recursive: true }),
+  mkdir(join(targetRoot, 'fonts'), { recursive: true }),
   mkdir(join(targetRoot, 'qr'), { recursive: true })
 ]);
 await Promise.all([
@@ -69,6 +72,11 @@ await Promise.all([
   copyFile(join(sourceRoot, 'menu-admin-a.css'), join(targetRoot, 'menu-admin-a.css')),
   copyFile(join(sourceRoot, 'menu-admin-a.js'), join(targetRoot, 'menu-admin-a.js')),
   copyFile(join(sourceRoot, 'order-system-a.css'), join(targetRoot, 'order-system-a.css')),
+  copyFile(join(sourceRoot, 'order-brand-refresh-a.css'), join(targetRoot, 'order-brand-refresh-a.css')),
+  copyFile(join(sourceRoot, 'fonts', 'urbanist-latin-variable.woff2'), join(targetRoot, 'fonts', 'urbanist-latin-variable.woff2')),
+  copyFile(join(sourceRoot, 'fonts', 'inter-latin-variable.woff2'), join(targetRoot, 'fonts', 'inter-latin-variable.woff2')),
+  copyFile(join(sourceRoot, 'fonts', 'OFL-Urbanist.txt'), join(targetRoot, 'fonts', 'OFL-Urbanist.txt')),
+  copyFile(join(sourceRoot, 'fonts', 'OFL-Inter.txt'), join(targetRoot, 'fonts', 'OFL-Inter.txt')),
   copyFile(join(sourceRoot, 'order-system-a.js'), join(targetRoot, 'order-system-a.js')),
   copyFile(join(sourceRoot, 'static-demo-api-a.js'), join(targetRoot, 'static-demo-api-a.js')),
   copyFile(join(sourceRoot, 'reservation-a.css'), join(targetRoot, 'reservation-a.css')),
@@ -79,6 +87,8 @@ await Promise.all([
   copyFile(join(sourceRoot, 'order-pages', 'admin-pedidos.html'), join(siteRoot, 'admin', 'pedidos', 'index.html')),
   copyFile(join(sourceRoot, 'order-pages', 'admin-cocina.html'), join(siteRoot, 'admin', 'cocina', 'index.html')),
   copyFile(join(sourceRoot, 'order-pages', 'admin-reservaciones.html'), join(siteRoot, 'admin', 'reservaciones', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'admin-extras.html'), join(siteRoot, 'admin', 'extras', 'index.html')),
+  copyFile(join(sourceRoot, 'order-pages', 'admin-disponibilidad.html'), join(siteRoot, 'admin', 'disponibilidad', 'index.html')),
   copyFile(join(sourceRoot, 'order-pages', 'qr-mesas.html'), join(siteRoot, 'qr-mesas', 'index.html'))
 ]);
 

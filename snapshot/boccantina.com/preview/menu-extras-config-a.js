@@ -37,11 +37,28 @@
 
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const cleanText = (value, fallback = '') => String(value ?? fallback).trim().slice(0, 80);
+  const cleanId = (value) => cleanText(value).replace(/[^a-z0-9-_]/gi, '-').toLowerCase();
+  const statuses = ['available', 'sold-out-today', 'unavailable'];
+
+  function catalogProducts(config = null) {
+    const catalog = window.BoccMenuCatalog;
+    const categories = new Map((catalog?.categories || []).map((category) => [category.id, category]));
+    const builtIn = catalog?.products?.length ? catalog.products.map((product) => ({
+      ...product,
+      categoryEs: categories.get(product.category)?.es || product.category,
+      categoryEn: categories.get(product.category)?.en || product.category
+    })) : products;
+    return [...builtIn, ...(config?.customProducts || [])].filter((product, index, all) => all.findIndex((item) => item.id === product.id) === index);
+  }
 
   function createDefaultConfig() {
+    const library = [...new Map(Object.values(defaultExtras).flat().map((extra) => [extra.id, { ...extra, active: true }])).values()];
     return {
-      version: 1,
+      version: 2,
       updatedAt: null,
+      library,
+      availability: {},
+      customProducts: [],
       products: Object.fromEntries(products.map((product) => [product.id, {
         enabled: true,
         type: product.type,
@@ -59,27 +76,64 @@
 
   function normalizeConfig(value) {
     const fallback = createDefaultConfig();
-    const incomingProducts = value && typeof value === 'object' ? value.products : null;
-    products.forEach((product) => {
-      const incoming = incomingProducts?.[product.id];
-      if (!incoming || typeof incoming !== 'object') return;
+    const incomingProducts = value?.products && typeof value.products === 'object' ? value.products : {};
+    const categories = new Set((window.BoccMenuCatalog?.categories || []).map((item) => item.id));
+    const knownIds = new Set(catalogProducts().map((product) => product.id));
+    fallback.customProducts = (Array.isArray(value?.customProducts) ? value.customProducts : []).slice(0, 100)
+      .filter((product) => /^custom-[a-z0-9-]{6,60}$/.test(String(product?.id || '')) && !knownIds.has(product.id) && (!categories.size || categories.has(product.category)))
+      .map((product) => ({
+        id: product.id, category: product.category,
+        nameEs: cleanText(product.nameEs), nameEn: cleanText(product.nameEn, product.nameEs),
+        descEs: String(product.descEs || '').trim().slice(0, 240), descEn: String(product.descEn || product.descEs || '').trim().slice(0, 240),
+        price: normalizePrice(product.price), image: String(product.image || '').replace(/^\/+/, '').slice(0, 240),
+        tags: Array.isArray(product.tags) ? product.tags.filter((tag) => ['recommended', 'share', 'vegetarian', 'spicy'].includes(tag)) : [],
+        visible: product.visible !== false
+      })).filter((product) => product.nameEs);
+    const library = new Map(fallback.library.map((extra) => [extra.id, extra]));
+    for (const product of catalogProducts(fallback)) {
+      const incoming = incomingProducts[product.id];
+      if (!incoming || typeof incoming !== 'object') {
+        if (!fallback.products[product.id]) fallback.products[product.id] = { enabled: false, type: 'other', extras: [] };
+        continue;
+      }
       const seen = new Set();
-      const extras = Array.isArray(incoming.extras) ? incoming.extras.map((extra, index) => {
-        const proposedId = cleanText(extra?.id, `extra-${index + 1}`).replace(/[^a-z0-9-_]/gi, '-').toLowerCase();
-        const id = seen.has(proposedId) ? `${proposedId}-${index + 1}` : proposedId;
+      const extras = (Array.isArray(incoming.extras) ? incoming.extras : []).slice(0, 60).map((extra, index) => {
+        const id = cleanId(extra?.id || `extra-${index + 1}`);
+        if (!id || seen.has(id)) return null;
         seen.add(id);
         const nameEs = cleanText(extra?.nameEs ?? extra?.es);
-        const nameEn = cleanText(extra?.nameEn ?? extra?.en, nameEs);
-        return { id, nameEs, nameEn, price: normalizePrice(extra?.price) };
-      }) : fallback.products[product.id].extras;
+        if (!library.has(id) && nameEs) library.set(id, { id, nameEs, nameEn: cleanText(extra?.nameEn ?? extra?.en, nameEs), price: normalizePrice(extra?.price), active: true });
+        return { id, nameEs, nameEn: cleanText(extra?.nameEn ?? extra?.en, nameEs), price: normalizePrice(extra?.price), useLibraryPrice: extra?.useLibraryPrice === true };
+      }).filter(Boolean);
       fallback.products[product.id] = {
         enabled: typeof incoming.enabled === 'boolean' ? incoming.enabled : true,
-        type: product.type,
-        extras
+        type: cleanText(incoming.type, product.type || 'other'), extras
       };
-    });
+    }
+    for (const extra of (Array.isArray(value?.library) ? value.library : []).slice(0, 300)) {
+      const id = cleanId(extra?.id);
+      const nameEs = cleanText(extra?.nameEs);
+      if (id && nameEs) library.set(id, { id, nameEs, nameEn: cleanText(extra?.nameEn, nameEs), price: normalizePrice(extra?.price), active: extra.active !== false });
+    }
+    fallback.library = [...library.values()];
+    for (const config of Object.values(fallback.products)) {
+      config.extras = config.extras.filter((extra) => library.has(extra.id)).map((extra) => {
+        const shared = library.get(extra.id);
+        return { ...extra, nameEs: shared.nameEs, nameEn: shared.nameEn,
+          price: extra.useLibraryPrice ? shared.price : extra.price };
+      });
+    }
+    for (const [id, entry] of Object.entries(value?.availability || {})) {
+      if (!catalogProducts(fallback).some((product) => product.id === id)) continue;
+      const status = typeof entry === 'string' ? entry : entry?.status;
+      if (statuses.includes(status)) fallback.availability[id] = { status, updatedAt: typeof entry?.updatedAt === 'string' ? entry.updatedAt : null };
+    }
     fallback.updatedAt = typeof value?.updatedAt === 'string' ? value.updatedAt : null;
     return fallback;
+  }
+
+  function statusFor(config, product) {
+    return config?.availability?.[product.id]?.status || (product.soldOut ? 'sold-out-today' : 'available');
   }
 
   function load() {
@@ -91,19 +145,22 @@
     }
   }
 
-  function save(config) {
+  async function save(config) {
     const normalized = normalizeConfig({ ...config, updatedAt: new Date().toISOString() });
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify(normalized));
-      window.dispatchEvent(new CustomEvent('bocc:extras-config', { detail: clone(normalized) }));
-      fetch('/api/config/extras', {
+      const response = await fetch('/api/config/extras', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(normalized)
-      }).catch(() => {});
-      return { ok: true, config: normalized };
-    } catch {
-      return { ok: false, config: normalized };
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) return { ok: false, config: normalized, error: body.error || 'No se pudo guardar en el servidor.' };
+      const saved = normalizeConfig(body);
+      try { window.localStorage.setItem(storageKey, JSON.stringify(saved)); } catch {}
+      window.dispatchEvent(new CustomEvent('bocc:extras-config', { detail: clone(saved) }));
+      return { ok: true, config: saved };
+    } catch (error) {
+      return { ok: false, config: normalized, error: error.message || 'No hay conexión con el servidor.' };
     }
   }
 
@@ -136,5 +193,5 @@
     }
   }
 
-  window.BoccMenuExtrasConfig = Object.freeze({ storageKey, products: clone(products), defaults: createDefaultConfig, load, save, reset, hydrate, normalizePrice });
+  window.BoccMenuExtrasConfig = Object.freeze({ storageKey, products: clone(products), defaults: createDefaultConfig, load, save, reset, hydrate, normalizePrice, normalizeConfig, catalogProducts, statusFor });
 })();
