@@ -28,7 +28,7 @@ La cuenta propietaria está separada de las cuentas del equipo y no puede editar
 - El mesero solicita el cierre; cajero o propietario registran los cobros y liberan la mesa solo cuando ya no hay pedidos activos ni importes pendientes. La mesa sigue ocupada hasta esa liberación explícita.
 - `npm.cmd run check:admin` comprueba permisos, concurrencia, comandas, QR, reservas y cierre con archivos temporales. `node scripts/qa-salon-preview.mjs` abre un entorno visual desechable con usuarios de prueba; al detenerlo se eliminan sus datos. Estos comandos no usan `.preview-data/`.
 
-Esta implementación es un preview local, no un servicio listo para producción: las sesiones están en memoria, el registro de auditoría es un archivo local y el servidor HTTP no ofrece HTTPS. La carta pública todavía acepta importes de pedidos enviados por el cliente; antes de un despliegue real hay que calcular y validar precios únicamente en el servidor, revisar límites de acceso por turno y endurecer el seguimiento público de pedidos. La versión estática en GitHub Pages permanece como demo pública sin protección; no se deben usar credenciales reales allí. Para acceso privado remoto se requiere backend alojado con HTTPS.
+Esta implementación es un preview local, no un servicio listo para producción: las sesiones están en memoria, el registro de auditoría es un archivo local y el servidor HTTP no ofrece HTTPS. La carta pública todavía acepta importes de pedidos enviados por el cliente; antes de un despliegue real hay que calcular y validar precios únicamente en el servidor, revisar límites de acceso por turno y endurecer el seguimiento público de pedidos. La versión estática en GitHub Pages ofrece un login de demostración visual, sin autenticación real ni protección de archivos; no se deben usar credenciales reales allí. Para acceso privado remoto se requiere backend alojado con HTTPS.
 
 ## Variantes de hero para revisión
 
@@ -109,6 +109,7 @@ monitoreo y configuración de la impresora térmica del restaurante.
 ## Demo compartible en GitHub Pages
 
 La rama `preview/hero-a` publica automáticamente el snapshot en GitHub Pages.
+El acceso de demostración está en `https://sebasb115.github.io/boccantina-preview/admin/login/` con `demo-boccantina` / `vista2026`. El formulario solo controla la navegación de esta demo en el navegador: no verifica usuarios en servidor ni protege los recursos publicados. Las vistas administrativas directas envían primero a esa pantalla y «Salir» borra el estado de acceso visual.
 En ese dominio, pedidos, mesas, meseros y reservaciones usan una base de prueba
 en `localStorage`: los datos permanecen solamente en el navegador que realiza
 la demostración, no se comparten entre dispositivos y no llegan al restaurante.

@@ -59,6 +59,7 @@ await Promise.all([
   mkdir(join(siteRoot, 'admin', 'reservaciones'), { recursive: true }),
   mkdir(join(siteRoot, 'admin', 'extras'), { recursive: true }),
   mkdir(join(siteRoot, 'admin', 'disponibilidad'), { recursive: true }),
+  mkdir(join(siteRoot, 'admin', 'login'), { recursive: true }),
   mkdir(join(siteRoot, 'qr-mesas'), { recursive: true }),
   mkdir(join(targetRoot, 'fonts'), { recursive: true }),
   mkdir(join(targetRoot, 'qr'), { recursive: true })
@@ -90,6 +91,19 @@ await Promise.all([
   copyFile(join(sourceRoot, 'order-pages', 'admin-extras.html'), join(siteRoot, 'admin', 'extras', 'index.html')),
   copyFile(join(sourceRoot, 'order-pages', 'admin-disponibilidad.html'), join(siteRoot, 'admin', 'disponibilidad', 'index.html')),
   copyFile(join(sourceRoot, 'order-pages', 'qr-mesas.html'), join(siteRoot, 'qr-mesas', 'index.html'))
+]);
+
+let demoLogin = await readFile(join(sourceRoot, 'admin-login', 'index.html'), 'utf8');
+demoLogin = demoLogin
+  .replace('<title>Acceso administrativo · Boccantina</title>', '<title>Acceso de demostración · Boccantina</title>')
+  .replace('href="/preview/admin-entry.css"', 'href="../../preview/admin-entry.css"')
+  .replace('src="/preview/assets/boccantina-logo-transparent.png"', 'src="../../preview/assets/boccantina-logo-transparent.png"')
+  .replace('href="http://127.0.0.1:4180/central/"', 'href="https://sebasb115.github.io/isabellas-menu-preview-a/central/"')
+  .replace('<h1 class="entry-kicker">ACCESO PRIVADO</h1>', '<h1 class="entry-kicker">ACCESO DE DEMOSTRACIÓN</h1>')
+  .replace('<p class="entry-foot">Vista previa local · Los cambios no se publican en producción.</p>', '<p class="entry-foot">Demo pública sin autenticación real. Usuario: <strong>demo-boccantina</strong> · Contraseña: <strong>vista2026</strong>. Los datos quedan en este navegador.</p>');
+await Promise.all([
+  writeFile(join(siteRoot, 'admin', 'login', 'index.html'), demoLogin, 'utf8'),
+  copyFile(join(sourceRoot, 'admin-login', 'demo-app.js'), join(siteRoot, 'admin', 'login', 'app.js'))
 ]);
 
 await Promise.all(Array.from({ length: 12 }, async (_, index) => {

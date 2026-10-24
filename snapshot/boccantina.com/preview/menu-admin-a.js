@@ -80,7 +80,7 @@
           ${themeButton()}
           <span class="bocc-admin-environment">${isStaticDemo ? 'DEMO GITHUB · NO PRODUCCIÓN' : 'PRUEBA LOCAL · NO PRODUCCIÓN'}</span>
           <a href="/?hero=a#bocc-menu-app" target="_blank" rel="noopener">Ver carta del cliente ${icon('external')}</a>
-          ${isStaticDemo ? '' : '<button class="bocc-admin-logout" type="button" data-admin-logout>Salir</button>'}
+          <button class="bocc-admin-logout" type="button" data-admin-logout>Salir</button>
         </div>
       </header>
       ${navigation}
@@ -142,7 +142,7 @@
   shell.querySelector('[data-admin-logout]')?.addEventListener('click', async (event) => {
     event.currentTarget.disabled = true;
     await fetch('/api/admin/logout', { method:'POST', credentials:'same-origin' }).catch(() => {});
-    location.assign('/admin/login/');
+    location.assign(appUrl('/admin/login/'));
   });
   const region = (name) => shell.querySelector(`[data-region="${name}"]`);
 

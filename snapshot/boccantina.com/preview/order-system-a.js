@@ -71,7 +71,7 @@
   }
 
   function header({ table = null, internal = false, context = null, centralLink = page === 'qr' } = {}) {
-    const logout = !isStaticDemo && (internal || ['admin', 'reservations', 'kitchen', 'qr', 'staff', 'availability'].includes(page));
+    const logout = internal || ['admin', 'reservations', 'kitchen', 'qr', 'staff', 'availability'].includes(page);
     const adminPage = ['admin', 'reservations', 'kitchen', 'qr', 'staff', 'availability'].includes(page);
     const showBackLink = centralLink && !adminPage;
     return `<header class="order-header${showBackLink ? ' order-header--with-back' : ''}">
@@ -1894,7 +1894,7 @@
     if (!button) return;
     button.disabled = true;
     await fetch('/api/admin/logout', { method:'POST', credentials:'same-origin' }).catch(() => {});
-    location.assign('/admin/login/');
+    location.assign(appUrl('/admin/login/'));
   });
 
   document.addEventListener('keydown', (event) => {

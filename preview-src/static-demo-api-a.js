@@ -8,6 +8,24 @@
   window.BoccStaticDemo = Object.freeze({ enabled, basePath, appUrl });
   if (!enabled) return;
 
+  const accessKey = 'boccantina.github-pages.demo-access.v1';
+  const path = location.pathname.startsWith(basePath) ? location.pathname.slice(basePath.length) || '/' : location.pathname;
+  const privateView = /^\/admin\/(?!login(?:\/|$))/.test(path)
+    || /^\/qr-mesas(?:\/|$)/.test(path)
+    || /^\/pedido(?:\/|$)/.test(path) && (new URLSearchParams(location.search).get('modo') === 'interno' || new URLSearchParams(location.search).get('tipo') === 'counter')
+    || path === '/' && new URLSearchParams(location.search).get('admin') === 'extras';
+  if (privateView && sessionStorage.getItem(accessKey) !== '1') {
+    document.documentElement.style.visibility = 'hidden';
+    location.replace(`${appUrl('/admin/login/')}?next=${encodeURIComponent(path + location.search)}`);
+    return;
+  }
+  if (privateView) window.addEventListener('pageshow', event => {
+    if (event.persisted && sessionStorage.getItem(accessKey) !== '1') {
+      document.documentElement.style.visibility = 'hidden';
+      location.replace(appUrl('/admin/login/'));
+    }
+  });
+
   const storageKey = 'boccantina.github-pages.demo.v1';
   const now = () => new Date().toISOString();
   const id = () => crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -119,6 +137,11 @@
     const method = String(options.method || 'GET').toUpperCase();
     const payload = bodyOf(options);
     const path = url.pathname.startsWith(basePath) ? url.pathname.slice(basePath.length) || '/' : url.pathname;
+
+    if (path === '/api/admin/logout' && method === 'POST') {
+      sessionStorage.removeItem(accessKey);
+      return response(200, { ok: true });
+    }
 
     if (method === 'GET' && path === '/api/health') return response(200, { ok: true, orders: store.orders.length, networkUrls: [appUrl('/')] });
     if (path === '/api/config/extras') {
