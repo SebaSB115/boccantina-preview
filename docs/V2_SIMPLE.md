@@ -40,7 +40,7 @@ El archivo de catálogo, las cuentas y las imágenes subidas se guardan en `.pre
 
 ## QR y futura puesta en línea
 
-Sin configuración, el QR apunta a `127.0.0.1:4175`: sirve para revisar la presentación **en el mismo equipo**, no para imprimirlo y entregarlo a clientes. Cuando exista un servidor público protegido con HTTPS, define `BOCCANTINA_V2_PUBLIC_URL=https://tu-dominio.example` antes de iniciar V2. El servidor validará HTTPS y el QR abrirá `/carta/` en ese dominio. La autenticación real y los datos compartidos requieren alojar este servidor Node y un plan de operación, seguridad y copias de respaldo. Esta rama no está desplegada.
+Sin configuración, el QR apunta a `127.0.0.1:4175`: sirve para revisar la presentación **en el mismo equipo**, no para imprimirlo y entregarlo a clientes. Cuando exista un servidor público protegido con HTTPS, define `BOCCANTINA_V2_PUBLIC_URL=https://tu-dominio.example` antes de iniciar V2. El servidor validará HTTPS y el QR abrirá `/carta/` en ese dominio. La autenticación real y los datos compartidos requieren alojar este servidor Node y un plan de operación, seguridad y copias de respaldo. El servidor Node de V2 sigue siendo local; la demostración estática sí está publicada en GitHub Pages.
 
 ## Comprobaciones
 
