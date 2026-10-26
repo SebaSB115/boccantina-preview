@@ -15,6 +15,8 @@ assert.match(selector, /href="\.\.\/admin\/login\/"/);
 assert.match(selector, /Demostración pública/);
 assert.match(login, /ACCESO DE DEMOSTRACIÓN/);
 assert.match(login, /demo-boccantina/);
+assert.match(login, /id="login-form" method="post"/);
+assert.match(login, /type="submit" disabled/);
 assert.match(admin, /DEMO PÚBLICA · CAMBIOS SOLO EN ESTE NAVEGADOR/);
 assert.match(carta, /permanecen solo en tu navegador/);
 for (const html of [login, admin, carta]) {

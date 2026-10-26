@@ -1,6 +1,7 @@
 const form = document.getElementById('login-form');
 const message = document.getElementById('login-error');
 const password = document.getElementById('password');
+form.querySelector('[type="submit"]').disabled = false;
 if (new URLSearchParams(location.search).has('updated')) message.textContent = 'Contraseña actualizada. Inicia sesión de nuevo.';
 document.getElementById('show-password').addEventListener('click', (event) => {
   const shown = password.type === 'password';

@@ -38,6 +38,7 @@ for (const name of ['admin.js','admin.css','carta.js','carta.css','login.js','lo
   if (name === 'login.html') {
     source = injectDemo(source, 'login.js')
       .replace('>ACCESO PRIVADO</h1>', '>ACCESO DE DEMOSTRACIÓN</h1>')
+      .replace('class="entry-button" type="submit"', 'class="entry-button" type="submit" disabled')
       .replace('Versión 2 simple · Vista previa local · No producción', 'DEMO PÚBLICA · Usuario: demo-boccantina · Clave: vista2026 · No uses contraseñas reales.');
   }
   if (name === 'admin.html') {
@@ -58,6 +59,7 @@ for (const name of ['admin.js','admin.css','carta.js','carta.css','login.js','lo
 }
 
 const seed = defaultCatalog();
+seed.updatedAt = null;
 for (const item of [...seed.categories, ...seed.products]) {
   if (item.image?.startsWith('/')) item.image = `${base}${item.image}`;
 }
