@@ -13,3 +13,4 @@ reference/private/
 .DS_Store
 Thumbs.db
 .preview-data/
+.preview-data-v2/

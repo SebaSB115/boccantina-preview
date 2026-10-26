@@ -1,5 +1,7 @@
 # Boccantina — preview local
 
+> **Rama `version/2-simple`:** la nueva carta de consulta y su administrador local se ejecutan con `npm.cmd run serve:v2`. [Instrucciones y alcance de la versión 2](docs/V2_SIMPLE.md). El resto de este README describe el preview anterior y no es la ruta de entrada de V2.
+
 **[Estado de la entrega del 23 de octubre de 2026](ESTADO_2026-10-23.md)**: alcance, comprobaciones y límites del preview.
 
 Copia aislada para maquetado y pruebas visuales de `https://boccantina.com/`.

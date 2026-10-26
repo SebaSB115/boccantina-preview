@@ -1,0 +1,100 @@
+/* Administrative entry UI · v1. Source of truth for selector and both logins.
+   Run npm run sync:admin-ui after changes; generated copies are checked byte for byte. */
+.admin-entry {
+  --ae-font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ae-ink: #203138;
+  --ae-muted: #52636a;
+  --ae-paper: #f5f6f4;
+  --ae-surface: #ffffff;
+  --ae-line: #cbd4d3;
+  --ae-line-strong: #899da0;
+  --ae-primary: #173741;
+  --ae-primary-hover: #244d57;
+  --ae-on-primary: #ffffff;
+  --ae-focus: #946520;
+  --ae-error: #9c2929;
+  --ae-error-surface: #fff1ef;
+  --ae-success: #28634a;
+  --ae-space-1: .25rem;
+  --ae-space-2: .5rem;
+  --ae-space-3: .75rem;
+  --ae-space-4: 1rem;
+  --ae-space-5: 1.5rem;
+  --ae-space-6: 2rem;
+  --ae-space-7: 3rem;
+  --ae-control-height: 48px;
+  --ae-radius: 6px;
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0;
+  background: var(--ae-paper);
+  color: var(--ae-ink);
+  font: 400 16px/1.5 var(--ae-font);
+}
+.admin-entry *, .admin-entry *::before, .admin-entry *::after { box-sizing: border-box; }
+.admin-entry :focus-visible { outline: 3px solid var(--ae-focus); outline-offset: 3px; }
+.admin-entry a { color: inherit; }
+.admin-entry .entry-skip { position: fixed; z-index: 50; inset: .5rem auto auto .5rem; padding: .6rem .9rem; background: var(--ae-surface); transform: translateY(-160%); }
+.admin-entry .entry-skip:focus { transform: none; }
+.admin-entry .entry-shell { width: min(100% - 2rem, 960px); margin-inline: auto; }
+.admin-entry .entry-header { border-bottom: 1px solid var(--ae-line); background: var(--ae-surface); }
+.admin-entry .entry-header__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--ae-space-4); min-height: 68px; }
+.admin-entry .entry-header__title { margin: 0; font-size: 1rem; font-weight: 700; }
+.admin-entry .entry-header__link, .admin-entry .entry-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--ae-primary); font-size: .875rem; font-weight: 600; text-underline-offset: .2em; }
+.admin-entry .entry-header__link:hover, .admin-entry .entry-back:hover { color: var(--ae-primary-hover); }
+.admin-entry .entry-main { padding-block: clamp(2rem, 7vh, 5rem) 3rem; }
+.admin-entry .entry-intro { max-width: 650px; margin: 0 auto var(--ae-space-6); text-align: center; }
+.admin-entry .entry-kicker { margin: 0 0 var(--ae-space-2); color: var(--ae-muted); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.admin-entry .entry-intro h1, .admin-entry .entry-login h1 { margin: 0; color: var(--ae-ink); font: 700 clamp(1.75rem, 3.5vw, 2.25rem)/1.18 var(--ae-font); letter-spacing: -.035em; }
+.admin-entry .entry-intro > p:last-child, .admin-entry .entry-lead { margin: var(--ae-space-3) 0 0; color: var(--ae-muted); }
+.admin-entry .entry-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ae-space-4); }
+.admin-entry .entry-option { display: flex; flex-direction: column; min-width: 0; min-height: 215px; padding: var(--ae-space-5); border: 1px solid var(--ae-line); border-radius: var(--ae-radius); background: var(--ae-surface); text-decoration: none; transition: border-color .15s ease, background-color .15s ease; }
+.admin-entry .entry-option:hover { border-color: var(--ae-line-strong); background: #fbfcfb; }
+.admin-entry .entry-option__logo { display: flex; align-items: center; width: min(100%, 240px); height: 72px; margin-bottom: var(--ae-space-4); }
+.admin-entry .entry-option__logo img { display: block; max-width: 100%; max-height: 72px; width: auto; height: auto; object-fit: contain; }
+.admin-entry .entry-option__name { display: block; font-size: 1.125rem; font-weight: 700; line-height: 1.3; }
+.admin-entry .entry-option__description { display: block; margin-top: var(--ae-space-1); color: var(--ae-muted); font-size: .875rem; }
+.admin-entry .entry-option__action { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; margin-top: auto; padding-top: var(--ae-space-3); color: var(--ae-primary); font-size: .875rem; font-weight: 700; }
+.admin-entry .entry-option__action span { font-size: 1.15rem; line-height: 1; }
+.admin-entry .entry-note { margin: var(--ae-space-6) 0 0; color: var(--ae-muted); font-size: .8125rem; text-align: center; }
+
+/* The same login composition is served by two independent admin applications. */
+.admin-entry.entry-page { display: block; min-height: 100vh; min-height: 100svh; }
+.admin-entry .entry-login { display: flex; flex-direction: column; width: min(100% - 2rem, 440px); min-height: 100vh; min-height: 100svh; margin-inline: auto; padding: var(--ae-space-5) 0 var(--ae-space-6); }
+.admin-entry .entry-back { align-self: flex-start; margin-bottom: var(--ae-space-6); }
+.admin-entry .entry-login__body { margin-block: auto; padding-bottom: var(--ae-space-6); }
+.admin-entry .entry-brand { display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: var(--ae-space-4); }
+.admin-entry .entry-brand__logo { display: block; width: min(100%, 300px); }
+.admin-entry .entry-brand__logo--boccantina { width: min(100%, 324px); }
+.admin-entry .entry-brand__logo img { display: block; width: 100%; height: auto; }
+.admin-entry .entry-login h1.entry-kicker { margin: 0 0 var(--ae-space-6); color: var(--ae-muted); font: 700 .75rem/1.4 var(--ae-font); letter-spacing: .14em; text-align: center; }
+.admin-entry .entry-lead { margin-bottom: var(--ae-space-5); }
+.admin-entry .entry-form { display: grid; gap: var(--ae-space-4); margin: 0; }
+.admin-entry .entry-field { display: grid; gap: var(--ae-space-2); min-width: 0; }
+.admin-entry .entry-field label { margin: 0; color: var(--ae-ink); font: 600 .875rem/1.4 var(--ae-font); }
+.admin-entry .entry-field input { display: block; width: 100%; min-width: 0; min-height: var(--ae-control-height); margin: 0; padding: .65rem .8rem; border: 1px solid var(--ae-line-strong); border-radius: var(--ae-radius); background: var(--ae-surface); color: var(--ae-ink); font: inherit; }
+.admin-entry .entry-field input:hover { border-color: var(--ae-primary); }
+.admin-entry .entry-field input:focus-visible { border-color: var(--ae-focus); }
+.admin-entry .entry-password { position: relative; }
+.admin-entry .entry-password input { padding-inline-end: 6rem; }
+.admin-entry .entry-password button { position: absolute; inset: 2px 3px 2px auto; min-width: 76px; min-height: 42px; margin: 0; padding: .3rem .5rem; border: 0; border-radius: 4px; background: transparent; color: var(--ae-primary); font: 600 .8125rem/1.2 var(--ae-font); cursor: pointer; }
+.admin-entry .entry-password button:hover { background: #edf2f1; }
+.admin-entry .entry-button { display: inline-flex; align-items: center; justify-content: center; gap: var(--ae-space-2); width: 100%; min-height: var(--ae-control-height); margin: var(--ae-space-1) 0 0; padding: .65rem 1rem; border: 1px solid var(--ae-primary); border-radius: var(--ae-radius); background: var(--ae-primary); color: var(--ae-on-primary); font: 700 .9375rem/1.3 var(--ae-font); cursor: pointer; }
+.admin-entry .entry-button:hover { background: var(--ae-primary-hover); }
+.admin-entry .entry-button:active { background: #102b33; }
+.admin-entry .entry-button:disabled { opacity: .65; cursor: wait; }
+.admin-entry .entry-error { margin: 0; color: var(--ae-error); font-size: .875rem; }
+.admin-entry .entry-error:not(:empty) { padding: .65rem .8rem; border-left: 3px solid var(--ae-error); background: var(--ae-error-surface); }
+.admin-entry .entry-foot { margin: var(--ae-space-5) 0 0; color: var(--ae-muted); font-size: .8125rem; }
+@media (max-width: 640px) {
+  .admin-entry .entry-header__inner { min-height: 60px; }
+  .admin-entry .entry-main { padding-block: var(--ae-space-6); }
+  .admin-entry .entry-options { grid-template-columns: 1fr; }
+  .admin-entry .entry-option { min-height: 0; padding: var(--ae-space-4); }
+  .admin-entry .entry-option__logo { margin-bottom: var(--ae-space-3); }
+  .admin-entry .entry-login { padding-top: var(--ae-space-3); }
+  .admin-entry .entry-back { margin-bottom: var(--ae-space-5); }
+  .admin-entry .entry-login__body { padding-bottom: 0; }
+  .admin-entry .entry-brand { margin-bottom: var(--ae-space-3); }
+}
+@media (prefers-reduced-motion: reduce) { .admin-entry .entry-option { transition: none; } }

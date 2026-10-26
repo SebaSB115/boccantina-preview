@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Administración de la carta · Boccantina</title>
+  <link rel="stylesheet" href="/v2/admin.css">
+  <script src="/v2/admin.js" defer></script>
+</head>
+<body data-theme="blue">
+  <a class="skip-link" href="#main">Ir al contenido</a>
+  <header class="app-header">
+    <a href="/admin/" class="brand" aria-label="Boccantina, administración de la carta"><img src="/preview/assets/boccantina-logo-transparent.png" alt="" width="401" height="98"><span>Administración de la carta</span></a>
+    <div class="header-actions"><span class="environment">V2 SIMPLE · PRUEBA LOCAL</span><button id="theme-button" class="button button--quiet" type="button">Estilo dorado</button><button id="logout-button" class="button button--quiet" type="button">Salir</button></div>
+  </header>
+  <nav class="main-nav" aria-label="Administración">
+    <button type="button" data-view="products" aria-current="page">Productos</button>
+    <button type="button" data-view="categories">Categorías</button>
+    <button type="button" data-view="users">Cuentas</button>
+    <button type="button" data-view="qr">QR del menú</button>
+    <a href="/carta/" target="_blank" rel="noopener">Ver carta <span aria-hidden="true">↗</span></a>
+  </nav>
+  <main id="main" class="main" tabindex="-1">
+    <div class="page-heading"><div><p class="eyebrow">BOCCANTINA · VERSIÓN 2</p><h1 id="page-title">Productos</h1><p id="page-description">Edita lo que aparece en la carta digital.</p></div><span class="user-label" id="current-user"></span></div>
+    <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
+    <section id="view-content" aria-labelledby="page-title"></section>
+  </main>
+</body>
+</html>
