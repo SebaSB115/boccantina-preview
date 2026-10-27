@@ -127,4 +127,24 @@ input[type=file]{width:100%;max-width:100%;font-size:.8rem}
   .main-nav{display:grid}
   .main-nav a{min-height:46px;margin:0}
 }
+.app-header{display:flex;flex-wrap:wrap}
+.header-start{display:flex;align-items:center;gap:12px;min-width:0}
+.sidebar-toggle,.sidebar-close{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid #ffffff66;border-radius:var(--radius);background:transparent;color:var(--brand-text);font-size:1.25rem}
+.sidebar-toggle:hover,.sidebar-close:hover{border-color:var(--accent)}
+.sidebar-backdrop{position:fixed;inset:0;z-index:20;width:100%;border:0;background:#0c1218a6}
+.sidebar-backdrop[hidden]{display:none}
+.admin-sidebar{position:fixed;inset:0 auto 0 0;z-index:21;display:flex;flex-direction:column;width:min(300px,calc(100% - 32px));padding:20px 16px;background:var(--surface);color:var(--text);border-right:1px solid var(--border);overflow:auto;transform:translateX(-100%);visibility:hidden}
+.is-sidebar-open .admin-sidebar{transform:none;visibility:visible}
+.is-sidebar-open{overflow:hidden}
+.sidebar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 8px 24px;border-bottom:1px solid var(--border)}
+.sidebar-head img{display:block;width:170px;height:auto;max-width:calc(100% - 56px)}
+.sidebar-close{border-color:var(--border);color:var(--text)}
+.sidebar-caption{margin:22px 12px 8px;color:var(--muted);font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.admin-sidebar .main-nav{display:grid;grid-template-columns:1fr;align-content:start;gap:4px;padding:0;background:transparent;border:0}
+.admin-sidebar .main-nav button,.admin-sidebar .main-nav a{display:flex;justify-content:flex-start;width:100%;min-height:44px;margin:0;padding:10px 12px;border:1px solid transparent;border-radius:var(--radius);background:transparent;color:var(--text);text-align:left;white-space:normal;font-size:.9rem}
+.admin-sidebar .main-nav button:hover,.admin-sidebar .main-nav a:hover{background:var(--subtle)}
+.admin-sidebar .main-nav [aria-current=page]{border-color:var(--accent);background:var(--accent-soft);font-weight:750}
+.sidebar-foot{margin:auto 12px 0;padding-top:32px;color:var(--muted);font-size:.72rem;font-weight:700;letter-spacing:.04em}
+@media(max-width:650px){.app-header{gap:8px;padding:10px 16px}.header-start{flex:1 1 150px}.brand img{width:138px}.header-actions{display:flex;flex:0 1 auto}.environment{display:none}.main{padding-top:24px}}
+@media(max-width:370px){.header-start{flex-basis:138px;gap:8px}.brand img{width:108px}.header-actions{margin-left:auto}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

@@ -1,8 +1,12 @@
 const root = document.getElementById('menu-root');
-const state = { catalog:null, language:localStorage.getItem('boccantina-v2-menu-language') === 'en' ? 'en' : 'es', category:null, query:'' };
+function initialLanguage() {
+  try { const saved = localStorage.getItem('boccantina-v2-menu-language'); if (saved === 'es' || saved === 'en') return saved; } catch {}
+  return /^es(?:-|$)/i.test(navigator.language || '') ? 'es' : 'en';
+}
+const state = { catalog:null, language:initialLanguage(), category:null, query:'', gridOpen:true };
 const translations = {
-  es: { menu:'Carta digital', heading:'La carta', consult:'Solo consulta', category:'Categoría', intro:'Explora platos, precios y disponibilidad.', categories:'Categorías', pick:'Elegir categoría', search:'Buscar un plato o ingrediente', searchPlaceholder:'Buscar en toda la carta', clear:'Limpiar búsqueda', dishes:'platos', dish:'plato', featuredDish:'Plato', results:'Resultados de búsqueda', noResults:'No encontramos platos con ese nombre o ingrediente.', noCategory:'La carta está en preparación. Consulta al personal del restaurante.', count:'en esta categoría', details:'Ver detalles', close:'Cerrar detalles', unavailable:'No disponible actualmente', pricePending:'Precio por confirmar', reference:'Imagen ilustrativa de la categoría', ownPhoto:'Fotografía del plato', noDescription:'Consulta al personal por los detalles de este plato.', nextLanguage:'English' },
-  en: { menu:'Digital menu', heading:'The menu', consult:'Browse only', category:'Category', intro:'Explore dishes, prices and availability.', categories:'Categories', pick:'Choose a category', search:'Search for a dish or ingredient', searchPlaceholder:'Search the whole menu', clear:'Clear search', dishes:'dishes', dish:'dish', featuredDish:'Dish', results:'Search results', noResults:'No dishes match that name or ingredient.', noCategory:'The menu is being prepared. Please ask our team.', count:'in this category', details:'View details', close:'Close details', unavailable:'Currently unavailable', pricePending:'Price to be confirmed', reference:'Illustrative category image', ownPhoto:'Dish photograph', noDescription:'Please ask our team for more details about this dish.', nextLanguage:'Español' }
+  es: { menu:'Carta digital', heading:'La carta', consult:'Solo consulta', category:'Categoría', intro:'Explora platos, precios y disponibilidad.', categories:'Categorías', pick:'Elegir categoría', change:'Cambiar categoría', search:'Buscar un plato o ingrediente', searchPlaceholder:'Buscar en toda la carta', clear:'Limpiar búsqueda', dishes:'platos', dish:'plato', featuredDish:'Plato', results:'Resultados de búsqueda', noResults:'No encontramos platos con ese nombre o ingrediente.', noCategory:'La carta está en preparación. Consulta al personal del restaurante.', count:'en esta categoría', details:'Ver detalles', close:'Cerrar detalles', unavailable:'No disponible actualmente', pricePending:'Precio por confirmar', reference:'Imagen ilustrativa de la categoría', ownPhoto:'Fotografía del plato', noDescription:'Consulta al personal por los detalles de este plato.' },
+  en: { menu:'Digital menu', heading:'The menu', consult:'Browse only', category:'Category', intro:'Explore dishes, prices and availability.', categories:'Categories', pick:'Choose a category', change:'Change category', search:'Search for a dish or ingredient', searchPlaceholder:'Search the whole menu', clear:'Clear search', dishes:'dishes', dish:'dish', featuredDish:'Dish', results:'Search results', noResults:'No dishes match that name or ingredient.', noCategory:'The menu is being prepared. Please ask our team.', count:'in this category', details:'View details', close:'Close details', unavailable:'Currently unavailable', pricePending:'Price to be confirmed', reference:'Illustrative category image', ownPhoto:'Dish photograph', noDescription:'Please ask our team for more details about this dish.' }
 };
 const html = (value = '') => String(value).replace(/[&<>"']/g, (character) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[character]);
 const copy = () => translations[state.language];
@@ -27,7 +31,7 @@ function categoryImage(category) {
 function shell() {
   root.innerHTML = `<header class="site-header"><div class="site-header__inner">
     <a class="brand" href="/boccantina-preview/carta/" aria-label="Boccantina · ${html(copy().menu)}"><img src="/boccantina-preview/preview/assets/boccantina-logo-transparent.png" alt="Boccantina Cantina de Vinos" width="401" height="98"></a>
-    <div class="header-tools"><span class="consult-label">${html(copy().consult)}</span><button class="language-button" type="button" data-language>${html(copy().nextLanguage)}</button></div>
+    <div class="header-tools"><span class="consult-label">${html(copy().consult)}</span><div class="language-switch" role="group" aria-label="Idioma / Language"><button type="button" data-language="es" aria-label="Español" aria-pressed="${state.language === 'es'}">ES</button><button type="button" data-language="en" aria-label="English" aria-pressed="${state.language === 'en'}">EN</button></div></div>
   </div></header>
   <main class="menu-layout" id="platos" tabindex="-1">
     <aside class="menu-navigation" aria-label="${html(copy().categories)}">
@@ -35,8 +39,6 @@ function shell() {
       <label class="search-label" for="menu-search">${html(copy().search)}</label>
       <div class="search-control"><input id="menu-search" name="menu-search" type="search" autocomplete="off" placeholder="${html(copy().searchPlaceholder)}" value="${html(state.query)}"><button type="button" class="clear-search" data-clear-search aria-label="${html(copy().clear)}" ${state.query ? '' : 'hidden'}>×</button></div>
       <nav class="category-links" aria-label="${html(copy().categories)}" data-category-links></nav>
-      <label class="category-picker-label" for="category-picker">${html(copy().pick)}</label>
-      <select id="category-picker" name="category-picker" data-category-picker></select>
     </aside>
     <section class="menu-content"><div id="menu-results"></div></section>
   </main>
@@ -46,9 +48,13 @@ function shell() {
 
 function renderNavigation() {
   const categories = state.catalog.categories;
-  root.querySelector('[data-category-links]').innerHTML = categories.map((item) => `<button type="button" data-category="${html(item.id)}" aria-current="${item.id === state.category && !state.query ? 'true' : 'false'}">${html(categoryName(item))}</button>`).join('');
-  const picker = root.querySelector('[data-category-picker]');
-  picker.innerHTML = categories.map((item) => `<option value="${html(item.id)}" ${item.id === state.category ? 'selected' : ''}>${html(categoryName(item))}</option>`).join('');
+  const sidebar = root.querySelector('[data-category-links]');
+  sidebar.hidden = state.gridOpen || Boolean(state.query);
+  sidebar.innerHTML = categories.map((item) => `<button type="button" data-category="${html(item.id)}" aria-current="${item.id === state.category && !state.query ? 'true' : 'false'}">${html(categoryName(item))}</button>`).join('');
+}
+
+function categoryGrid() {
+  return `<section class="category-index" aria-labelledby="category-index-title"><div class="category-index__heading"><span class="eyebrow">BOCCANTINA</span><h2 id="category-index-title" tabindex="-1">${html(copy().categories)}</h2></div><nav class="category-grid" aria-label="${html(copy().categories)}">${state.catalog.categories.map((item, index) => `<button type="button" class="category-tile" data-category="${html(item.id)}" ${item.id === state.category ? 'aria-current="true"' : ''}><span class="category-tile__number" aria-hidden="true">${String(index + 1).padStart(2,'0')}</span><span>${html(categoryName(item))}</span><span class="category-tile__arrow" aria-hidden="true">↗</span></button>`).join('')}</nav></section>`;
 }
 
 function itemsForView() {
@@ -69,6 +75,7 @@ function dishRow(item) {
 
 function renderResults() {
   const container = root.querySelector('#menu-results');
+  if (state.gridOpen && !state.query) { container.innerHTML = state.catalog.categories.length ? categoryGrid() : `<p class="menu-empty">${html(copy().noCategory)}</p>`; return; }
   const items = itemsForView();
   const search = Boolean(state.query);
   const category = categoryById(state.category);
@@ -76,7 +83,7 @@ function renderResults() {
   const visual = !search && category ? categoryImage(category) : null;
   const title = search ? copy().results : categoryName(category);
   const subtitle = search ? `“${html(state.query)}”` : categoryDescription(category);
-  container.innerHTML = `<header class="category-feature${visual ? '' : ' category-feature--plain'}">
+  container.innerHTML = `${search ? '' : `<button type="button" class="category-return" data-open-categories>${html(copy().change)} <span aria-hidden="true">▦</span></button>`}<header class="category-feature${visual ? '' : ' category-feature--plain'}">
       <div class="category-feature__copy"><span class="eyebrow">${html(search ? copy().results : copy().category)}</span><h2 id="category-title" tabindex="-1">${html(title)}</h2>${subtitle ? `<p>${subtitle}</p>` : ''}<span class="category-feature__count" role="status" aria-live="polite">${items.length} ${html(items.length === 1 ? copy().dish : copy().dishes)}${search ? '' : ` ${html(copy().count)}`}</span></div>
       ${visual ? `<figure class="category-feature__visual"><img src="${html(visual.path)}" alt="" width="600" height="420" decoding="async"><figcaption>${html(visual.caption)}</figcaption></figure>` : ''}
     </header>
@@ -97,14 +104,17 @@ function openDetail(id) {
 root.addEventListener('click', (event) => {
   const language = event.target.closest('[data-language]');
   if (language) {
-    state.language = state.language === 'es' ? 'en' : 'es';
-    localStorage.setItem('boccantina-v2-menu-language', state.language);
+    if (state.language === language.dataset.language) return;
+    const scroll = window.scrollY;
+    state.language = language.dataset.language;
+    try { localStorage.setItem('boccantina-v2-menu-language', state.language); } catch {}
     document.documentElement.lang = state.language;
     document.title = `${copy().menu} · Boccantina`;
-    shell(); root.querySelector('[data-language]').focus(); return;
+    shell(); root.querySelector(`[data-language="${state.language}"]`).focus({ preventScroll:true }); window.scrollTo(0, scroll); return;
   }
   const category = event.target.closest('[data-category]');
-  if (category) { state.category = category.dataset.category; state.query = ''; shell(); root.querySelector('#category-title')?.focus(); return; }
+  if (category) { state.category = category.dataset.category; state.query = ''; state.gridOpen = false; root.querySelector('#menu-search').value = ''; renderNavigation(); renderResults(); const title = root.querySelector('#category-title'); title?.focus({ preventScroll:true }); const top = root.querySelector('#menu-results').getBoundingClientRect().top; if (top < 12 || top > Math.min(240, innerHeight * .3)) window.scrollTo({ top:window.scrollY + top - 12, behavior:'instant' }); return; }
+  if (event.target.closest('[data-open-categories]')) { state.gridOpen = true; renderNavigation(); renderResults(); root.querySelector('#category-index-title')?.focus({ preventScroll:true }); return; }
   const clear = event.target.closest('[data-clear-search]');
   if (clear) { state.query = ''; root.querySelector('#menu-search').value = ''; root.querySelector('[data-clear-search]').hidden = true; renderNavigation(); renderResults(); root.querySelector('#menu-search').focus(); return; }
   const detail = event.target.closest('[data-detail]');
@@ -116,10 +126,6 @@ root.addEventListener('input', (event) => {
   state.query = event.target.value.trim();
   root.querySelector('[data-clear-search]').hidden = !state.query;
   renderNavigation(); renderResults();
-});
-root.addEventListener('change', (event) => {
-  if (event.target.id !== 'category-picker') return;
-  state.category = event.target.value; state.query = ''; shell(); root.querySelector('#category-title')?.focus();
 });
 root.addEventListener('click', (event) => {
   const dialog = root.querySelector('.dish-dialog');
@@ -133,7 +139,7 @@ async function start() {
     const response = await fetch('/boccantina-preview/api/v2/catalog', { cache:'no-store' });
     if (!response.ok) throw new Error('No se pudo cargar la carta.');
     state.catalog = await response.json();
-    state.category = state.catalog.categories[0]?.id || null;
+    state.category = null;
     shell();
   } catch (error) {
     root.innerHTML = `<main class="load-error" role="alert"><h1>La carta no está disponible</h1><p>${html(error.message)}</p><button type="button" data-retry>Reintentar</button></main>`;

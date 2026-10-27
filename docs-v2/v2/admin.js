@@ -5,6 +5,19 @@ const state = {
 };
 const content = document.getElementById('view-content');
 const feedback = document.getElementById('feedback');
+const sidebar = document.getElementById('admin-sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+function setSidebar(open, restoreFocus = false) {
+  document.body.classList.toggle('is-sidebar-open', open);
+  sidebar.inert = !open;
+  sidebar.setAttribute('aria-hidden', String(!open));
+  sidebarToggle.setAttribute('aria-expanded', String(open));
+  sidebarToggle.setAttribute('aria-label', open ? 'Cerrar menú de administración' : 'Abrir menú de administración');
+  sidebarBackdrop.hidden = !open;
+  if (open) sidebar.querySelector('#sidebar-close').focus();
+  else if (restoreFocus) sidebarToggle.focus();
+}
 const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const fold = (value = '') => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const money = (price) => price === null ? 'Sin precio' : `₡${Number(price).toLocaleString('es-CR')}`;
@@ -117,11 +130,13 @@ function render() {
   else renderQr();
 }
 async function navigate(view) {
-  if (view === state.view || !confirmDiscard()) return;
+  if (view === state.view) return true;
+  if (!confirmDiscard()) return false;
   state.dirty = false; state.view = view; state.mobileMode = 'list'; render();
   document.getElementById('main').focus({ preventScroll:true });
   if (view === 'users') { state.users = (await api('/boccantina-preview/api/v2/admin/users')).users; render(); }
   if (view === 'qr') { state.qr = await api('/boccantina-preview/api/v2/admin/qr'); render(); }
+  return true;
 }
 function formValue(form, key) { return form.elements.namedItem(key)?.value ?? ''; }
 async function saveCatalog(form, entity) {
@@ -190,7 +205,18 @@ async function saveUser(form) {
 
 document.querySelector('.main-nav').addEventListener('click', (event) => {
   const button = event.target.closest('[data-view]');
-  if (button) navigate(button.dataset.view).catch((error) => notify(error.message, true));
+  if (button) navigate(button.dataset.view).then((changed) => { if (changed) setSidebar(false); }).catch((error) => notify(error.message, true));
+});
+sidebarToggle.addEventListener('click', () => setSidebar(!document.body.classList.contains('is-sidebar-open'), true));
+document.getElementById('sidebar-close').addEventListener('click', () => setSidebar(false, true));
+sidebarBackdrop.addEventListener('click', () => setSidebar(false, true));
+document.addEventListener('keydown', (event) => {
+  if (!document.body.classList.contains('is-sidebar-open')) return;
+  if (event.key === 'Escape') { event.preventDefault(); setSidebar(false, true); return; }
+  if (event.key !== 'Tab') return;
+  const controls = [...sidebar.querySelectorAll('button, a[href]')].filter((item) => !item.disabled);
+  if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
+  else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0].focus(); }
 });
 content.addEventListener('input', (event) => {
   if (event.target.matches('[data-search]')) { state.search = event.target.value; content.querySelector('[data-items]').innerHTML = productRows(); return; }

@@ -84,16 +84,25 @@ try {
   check(product.response.status === 201, `Crear producto: ${product.raw}`);
   const productId = product.json.result.id;
   let publicMenu = (await call('/api/v2/catalog', 'GET', null, false)).json;
+  check(publicMenu.categories.some((item) => item.id === categoryId), 'La categoría creada debe aparecer al publicar un producto visible.');
   check(publicMenu.products.some((item) => item.id === productId && item.soldOut && item.price === null), 'La carta pública debe reflejar disponibilidad y precio pendiente.');
   check(publicMenu.products.some((item) => item.id === productId && item.nameEn === 'Test product'), 'La carta debe conservar el contenido en inglés.');
-  const conflict = await call(`/api/v2/admin/categories/${categoryId}`, 'DELETE', { revision:product.json.catalog.revision });
+  const renamed = await call(`/api/v2/admin/categories/${categoryId}`, 'PATCH', { ...category.json.result, revision:product.json.catalog.revision, es:'Aperitivos QA', en:'QA appetizers', position:0, visible:false });
+  check(renamed.response.status === 200, `Ocultar y renombrar categoría: ${renamed.raw}`);
+  publicMenu = (await call('/api/v2/catalog', 'GET', null, false)).json;
+  check(!publicMenu.categories.some((item) => item.id === categoryId) && !publicMenu.products.some((item) => item.id === productId), 'La categoría oculta y sus productos no deben mostrarse.');
+  const restored = await call(`/api/v2/admin/categories/${categoryId}`, 'PATCH', { ...renamed.json.result, revision:renamed.json.catalog.revision, visible:true });
+  check(restored.response.status === 200, `Restaurar categoría: ${restored.raw}`);
+  publicMenu = (await call('/api/v2/catalog', 'GET', null, false)).json;
+  check(publicMenu.categories[0]?.id === categoryId && publicMenu.categories[0]?.es === 'Aperitivos QA' && publicMenu.categories[0]?.en === 'QA appetizers', 'La carta debe seguir el nuevo nombre, la traducción y el orden de la Central.');
+  const conflict = await call(`/api/v2/admin/categories/${categoryId}`, 'DELETE', { revision:restored.json.catalog.revision });
   check(conflict.response.status === 409, 'No se debe eliminar una categoría con productos.');
   const badCsrf = await fetch(base + '/api/v2/admin/products', { method:'POST', headers:{ cookie, origin:base, 'content-type':'application/json', 'x-csrf-token':'incorrecto' }, body:'{}' });
   check(badCsrf.status === 403, 'Las escrituras deben verificar CSRF.');
   const png = await readFile(join(repo, 'snapshot/boccantina.com/preview/assets/boccantina-logo-transparent.png'));
   const upload = await call('/api/v2/admin/images', 'POST', png, true, 'image/png');
   check(upload.response.status === 201 && upload.json.path.startsWith('/media/'), `Subir imagen: ${upload.raw}`);
-  const edit = await call(`/api/v2/admin/products/${productId}`, 'PATCH', { ...product.json.result, revision:product.json.catalog.revision,
+  const edit = await call(`/api/v2/admin/products/${productId}`, 'PATCH', { ...product.json.result, revision:restored.json.catalog.revision,
     category:initial.categories[0].id, price:4750, available:true, image:upload.json.path });
   check(edit.response.status === 200, `Editar producto: ${edit.raw}`);
   publicMenu = (await call('/api/v2/catalog', 'GET', null, false)).json;

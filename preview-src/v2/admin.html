@@ -11,16 +11,22 @@
 <body data-theme="blue">
   <a class="skip-link" href="#main">Ir al contenido</a>
   <header class="app-header">
-    <a href="/admin/" class="brand" aria-label="Boccantina, administración de la carta"><img src="/preview/assets/boccantina-logo-transparent.png" alt="" width="401" height="98"><span>Administración de la carta</span></a>
+    <div class="header-start"><button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Abrir menú de administración" aria-controls="admin-sidebar" aria-expanded="false"><span aria-hidden="true">☰</span></button><a href="/admin/" class="brand" aria-label="Boccantina, administración de la carta"><img src="/preview/assets/boccantina-logo-transparent.png" alt="" width="401" height="98"><span>Administración de la carta</span></a></div>
     <div class="header-actions"><span class="environment">V2 SIMPLE · PRUEBA LOCAL</span><button id="theme-button" class="button button--quiet" type="button">Estilo dorado</button><button id="logout-button" class="button button--quiet" type="button">Salir</button></div>
   </header>
-  <nav class="main-nav" aria-label="Administración">
-    <button type="button" data-view="products" aria-current="page">Productos</button>
-    <button type="button" data-view="categories">Categorías</button>
-    <button type="button" data-view="users">Cuentas</button>
-    <button type="button" data-view="qr">QR del menú</button>
-    <a href="/carta/" target="_blank" rel="noopener">Ver carta <span aria-hidden="true">↗</span></a>
-  </nav>
+  <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="Cerrar menú de administración" tabindex="-1" hidden></button>
+  <aside id="admin-sidebar" class="admin-sidebar" role="dialog" aria-modal="true" aria-label="Navegación de la central" aria-hidden="true" inert>
+    <div class="sidebar-head"><img src="/preview/assets/boccantina-logo-transparent.png" alt="Boccantina" width="401" height="98"><button id="sidebar-close" class="sidebar-close" type="button" aria-label="Cerrar menú">×</button></div>
+    <p class="sidebar-caption">Administración</p>
+    <nav class="main-nav" aria-label="Secciones">
+      <button type="button" data-view="products" aria-current="page">Productos</button>
+      <button type="button" data-view="categories">Categorías</button>
+      <button type="button" data-view="users">Cuentas</button>
+      <button type="button" data-view="qr">QR del menú</button>
+      <a href="/carta/" target="_blank" rel="noopener">Ver carta <span aria-hidden="true">↗</span></a>
+    </nav>
+    <p class="sidebar-foot">V2 SIMPLE · PRUEBA LOCAL</p>
+  </aside>
   <main id="main" class="main" tabindex="-1">
     <div class="page-heading"><div><p class="eyebrow">BOCCANTINA · VERSIÓN 2</p><h1 id="page-title">Productos</h1><p id="page-description">Edita lo que aparece en la carta digital.</p></div><span class="user-label" id="current-user"></span></div>
     <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
