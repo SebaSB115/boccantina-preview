@@ -43,7 +43,7 @@ for (const name of ['admin.js','admin.css','carta.js','carta.css','login.js','lo
   }
   if (name === 'admin.html') {
     source = injectDemo(source, 'admin.js')
-      .replace('V2 SIMPLE · PRUEBA LOCAL', 'V2 SIMPLE · DEMO PÚBLICA · CAMBIOS SOLO EN ESTE NAVEGADOR');
+      .replaceAll('V2 SIMPLE · PRUEBA LOCAL', 'V2 SIMPLE · DEMO PÚBLICA · CAMBIOS SOLO EN ESTE NAVEGADOR');
   }
   if (name === 'carta.html') {
     source = injectDemo(source, 'carta.js')

@@ -43,9 +43,11 @@ try {
     catalog.products.find((item) => item.id === 'cachapa-v2').price = 5150;
     localStorage.setItem(key, JSON.stringify(catalog));
   });
-  await page.goto(`${base}/imprimir/?lang=es`, { waitUntil:'networkidle0' });
-  await page.waitForSelector('html[data-ready=true]');
-  const print = await page.evaluate(() => ({ price:/₡5\s?150/.test(document.body.textContent), products:document.querySelectorAll('.print-product').length, width:document.documentElement.scrollWidth }));
+  const printPage = await browser.newPage();
+  await printPage.setViewport({ width:390, height:844 });
+  await printPage.goto(`${base}/imprimir/?lang=es`, { waitUntil:'networkidle0' });
+  await printPage.waitForSelector('html[data-ready=true]');
+  const print = await printPage.evaluate(() => ({ price:/₡5\s?150/.test(document.body.textContent), products:document.querySelectorAll('.print-product').length, width:document.documentElement.scrollWidth }));
   assert(print.price && print.products > 40 && print.width <= 391, JSON.stringify(print));
   console.log('Pages V2: login demo, menú imprimible, catálogo local actualizado y móvil 390 px verificados.');
 } finally { await browser?.close(); await new Promise((done) => server.close(done)); }

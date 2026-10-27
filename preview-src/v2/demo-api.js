@@ -175,4 +175,7 @@
     if (!path.startsWith('/api/v2/')) return originalFetch(input, init);
     return Promise.resolve().then(() => handle(input, init, path)).catch((error) => fail(400, error.message || 'No se pudo completar la acción.'));
   };
+  // La vista A4 de la demo se abre en otra pestaña, donde sessionStorage no se comparte.
+  // Sus datos ya son locales y públicos; el servidor Node conserva su control de sesión.
+  Object.defineProperty(window, 'BoccV2DemoCatalog', { value:() => clone(catalog()) });
 })();
