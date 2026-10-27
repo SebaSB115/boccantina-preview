@@ -3,10 +3,11 @@ function initialLanguage() {
   try { const saved = localStorage.getItem('boccantina-v2-menu-language'); if (saved === 'es' || saved === 'en') return saved; } catch {}
   return /^es(?:-|$)/i.test(navigator.language || '') ? 'es' : 'en';
 }
+const ALL_PRODUCTS = '__all__';
 const state = { catalog:null, language:initialLanguage(), category:null, query:'', gridOpen:true };
 const translations = {
-  es: { menu:'Carta digital', heading:'La carta', consult:'Solo consulta', category:'Categoría', intro:'Explora platos, precios y disponibilidad.', categories:'Categorías', pick:'Elegir categoría', change:'Cambiar categoría', search:'Buscar un plato o ingrediente', searchPlaceholder:'Buscar en toda la carta', clear:'Limpiar búsqueda', dishes:'platos', dish:'plato', featuredDish:'Plato', results:'Resultados de búsqueda', noResults:'No encontramos platos con ese nombre o ingrediente.', noCategory:'La carta está en preparación. Consulta al personal del restaurante.', count:'en esta categoría', details:'Ver detalles', close:'Cerrar detalles', unavailable:'No disponible actualmente', pricePending:'Precio por confirmar', reference:'Imagen ilustrativa de la categoría', ownPhoto:'Fotografía del plato', noDescription:'Consulta al personal por los detalles de este plato.' },
-  en: { menu:'Digital menu', heading:'The menu', consult:'Browse only', category:'Category', intro:'Explore dishes, prices and availability.', categories:'Categories', pick:'Choose a category', change:'Change category', search:'Search for a dish or ingredient', searchPlaceholder:'Search the whole menu', clear:'Clear search', dishes:'dishes', dish:'dish', featuredDish:'Dish', results:'Search results', noResults:'No dishes match that name or ingredient.', noCategory:'The menu is being prepared. Please ask our team.', count:'in this category', details:'View details', close:'Close details', unavailable:'Currently unavailable', pricePending:'Price to be confirmed', reference:'Illustrative category image', ownPhoto:'Dish photograph', noDescription:'Please ask our team for more details about this dish.' }
+  es: { menu:'Carta digital', heading:'La carta', consult:'Solo consulta', category:'Categoría', intro:'Explora platos, precios y disponibilidad.', categories:'Categorías', allProducts:'Todos los productos', pick:'Elegir categoría', change:'Cambiar categoría', search:'Buscar un plato o ingrediente', searchPlaceholder:'Buscar en toda la carta', clear:'Limpiar búsqueda', dishes:'platos', dish:'plato', featuredDish:'Plato', results:'Resultados de búsqueda', noResults:'No encontramos platos con ese nombre o ingrediente.', noCategory:'La carta está en preparación. Consulta al personal del restaurante.', count:'en esta categoría', details:'Ver detalles', close:'Cerrar detalles', unavailable:'No disponible actualmente', pricePending:'Precio por confirmar', reference:'Imagen ilustrativa de la categoría', ownPhoto:'Fotografía del plato', noDescription:'Consulta al personal por los detalles de este plato.' },
+  en: { menu:'Digital menu', heading:'The menu', consult:'Browse only', category:'Category', intro:'Explore dishes, prices and availability.', categories:'Categories', allProducts:'All dishes', pick:'Choose a category', change:'Change category', search:'Search for a dish or ingredient', searchPlaceholder:'Search the whole menu', clear:'Clear search', dishes:'dishes', dish:'dish', featuredDish:'Dish', results:'Search results', noResults:'No dishes match that name or ingredient.', noCategory:'The menu is being prepared. Please ask our team.', count:'in this category', details:'View details', close:'Close details', unavailable:'Currently unavailable', pricePending:'Price to be confirmed', reference:'Illustrative category image', ownPhoto:'Dish photograph', noDescription:'Please ask our team for more details about this dish.' }
 };
 const html = (value = '') => String(value).replace(/[&<>"']/g, (character) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[character]);
 const copy = () => translations[state.language];
@@ -50,24 +51,24 @@ function renderNavigation() {
   const categories = state.catalog.categories;
   const sidebar = root.querySelector('[data-category-links]');
   sidebar.hidden = state.gridOpen || Boolean(state.query);
-  sidebar.innerHTML = categories.map((item) => `<button type="button" data-category="${html(item.id)}" aria-current="${item.id === state.category && !state.query ? 'true' : 'false'}">${html(categoryName(item))}</button>`).join('');
+  sidebar.innerHTML = `<button type="button" data-all-products aria-current="${state.category === ALL_PRODUCTS && !state.query}">${html(copy().allProducts)}</button>` + categories.map((item) => `<button type="button" data-category="${html(item.id)}" aria-current="${item.id === state.category && !state.query ? 'true' : 'false'}">${html(categoryName(item))}</button>`).join('');
 }
 
 function categoryGrid() {
-  return `<section class="category-index" aria-labelledby="category-index-title"><div class="category-index__heading"><span class="eyebrow">BOCCANTINA</span><h2 id="category-index-title" tabindex="-1">${html(copy().categories)}</h2></div><nav class="category-grid" aria-label="${html(copy().categories)}">${state.catalog.categories.map((item, index) => `<button type="button" class="category-tile" data-category="${html(item.id)}" ${item.id === state.category ? 'aria-current="true"' : ''}><span class="category-tile__number" aria-hidden="true">${String(index + 1).padStart(2,'0')}</span><span>${html(categoryName(item))}</span><span class="category-tile__arrow" aria-hidden="true">↗</span></button>`).join('')}</nav></section>`;
+  return `<section class="category-index" aria-labelledby="category-index-title"><div class="category-index__heading"><span class="eyebrow">BOCCANTINA</span><h2 id="category-index-title" tabindex="-1">${html(copy().categories)}</h2></div><nav class="category-grid" aria-label="${html(copy().categories)}"><button type="button" class="category-tile category-tile--all" data-all-products ${state.category === ALL_PRODUCTS ? 'aria-current="true"' : ''}><span>${html(copy().allProducts)}</span><span class="category-tile__arrow" aria-hidden="true">↗</span></button>${state.catalog.categories.map((item, index) => `<button type="button" class="category-tile" data-category="${html(item.id)}" ${item.id === state.category ? 'aria-current="true"' : ''}><span class="category-tile__number" aria-hidden="true">${String(index + 1).padStart(2,'0')}</span><span>${html(categoryName(item))}</span><span class="category-tile__arrow" aria-hidden="true">↗</span></button>`).join('')}</nav></section>`;
 }
 
 function itemsForView() {
-  if (!state.query) return state.catalog.products.filter((item) => item.category === state.category);
+  if (!state.query) return state.catalog.products.filter((item) => state.category === ALL_PRODUCTS || item.category === state.category);
   const needle = normalize(state.query.trim());
   return state.catalog.products.filter((item) => normalize(`${item.nameEs} ${item.nameEn} ${item.descEs} ${item.descEn}`).includes(needle));
 }
 
-function dishRow(item) {
+function dishRow(item, showCategory = false) {
   const photo = realPhoto(item) ? `<img class="dish-row__photo" src="${html(item.image)}" alt="" width="88" height="88" loading="lazy" decoding="async">` : '';
   const description = productDescription(item);
   return `<article class="dish-row${item.soldOut ? ' dish-row--unavailable' : ''}">
-    ${photo}<div class="dish-row__main"><div class="dish-row__heading"><h3>${html(productName(item))}</h3><span class="dish-row__price">${html(price(item.price))}</span></div>
+    ${photo}<div class="dish-row__main">${showCategory ? `<span class="dish-row__category">${html(categoryName(categoryById(item.category)))}</span>` : ''}<div class="dish-row__heading"><h3>${html(productName(item))}</h3><span class="dish-row__price">${html(price(item.price))}</span></div>
     ${description ? `<p class="dish-row__description">${html(description)}</p>` : ''}
     <div class="dish-row__footer">${item.soldOut ? `<span class="dish-row__status">${html(copy().unavailable)}</span>` : '<span></span>'}<button type="button" class="details-button" data-detail="${html(item.id)}">${html(copy().details)} <span aria-hidden="true">↗</span></button></div></div>
   </article>`;
@@ -78,16 +79,17 @@ function renderResults() {
   if (state.gridOpen && !state.query) { container.innerHTML = state.catalog.categories.length ? categoryGrid() : `<p class="menu-empty">${html(copy().noCategory)}</p>`; return; }
   const items = itemsForView();
   const search = Boolean(state.query);
-  const category = categoryById(state.category);
-  if (!category && !search) { container.innerHTML = `<p class="menu-empty">${html(copy().noCategory)}</p>`; return; }
+  const all = state.category === ALL_PRODUCTS;
+  const category = all ? null : categoryById(state.category);
+  if (!category && !search && !all) { container.innerHTML = `<p class="menu-empty">${html(copy().noCategory)}</p>`; return; }
   const visual = !search && category ? categoryImage(category) : null;
-  const title = search ? copy().results : categoryName(category);
-  const subtitle = search ? `“${html(state.query)}”` : categoryDescription(category);
+  const title = search ? copy().results : all ? copy().allProducts : categoryName(category);
+  const subtitle = search ? `“${html(state.query)}”` : all ? '' : categoryDescription(category);
   container.innerHTML = `${search ? '' : `<button type="button" class="category-return" data-open-categories>${html(copy().change)} <span aria-hidden="true">▦</span></button>`}<header class="category-feature${visual ? '' : ' category-feature--plain'}">
-      <div class="category-feature__copy"><span class="eyebrow">${html(search ? copy().results : copy().category)}</span><h2 id="category-title" tabindex="-1">${html(title)}</h2>${subtitle ? `<p>${subtitle}</p>` : ''}<span class="category-feature__count" role="status" aria-live="polite">${items.length} ${html(items.length === 1 ? copy().dish : copy().dishes)}${search ? '' : ` ${html(copy().count)}`}</span></div>
+      <div class="category-feature__copy"><span class="eyebrow">${html(search ? copy().results : all ? copy().menu : copy().category)}</span><h2 id="category-title" tabindex="-1">${html(title)}</h2>${subtitle ? `<p>${subtitle}</p>` : ''}<span class="category-feature__count" role="status" aria-live="polite">${items.length} ${html(items.length === 1 ? copy().dish : copy().dishes)}${search || all ? '' : ` ${html(copy().count)}`}</span></div>
       ${visual ? `<figure class="category-feature__visual"><img src="${html(visual.path)}" alt="" width="600" height="420" decoding="async"><figcaption>${html(visual.caption)}</figcaption></figure>` : ''}
     </header>
-    <div class="dish-list">${items.length ? items.map(dishRow).join('') : `<p class="menu-empty">${html(search ? copy().noResults : copy().noCategory)}</p>`}</div>`;
+    <div class="dish-list">${items.length ? items.map((item) => dishRow(item, all && !search)).join('') : `<p class="menu-empty">${html(search ? copy().noResults : copy().noCategory)}</p>`}</div>`;
 }
 
 function openDetail(id) {
@@ -114,6 +116,7 @@ root.addEventListener('click', (event) => {
   }
   const category = event.target.closest('[data-category]');
   if (category) { state.category = category.dataset.category; state.query = ''; state.gridOpen = false; root.querySelector('#menu-search').value = ''; renderNavigation(); renderResults(); const title = root.querySelector('#category-title'); title?.focus({ preventScroll:true }); const top = root.querySelector('#menu-results').getBoundingClientRect().top; if (top < 12 || top > Math.min(240, innerHeight * .3)) window.scrollTo({ top:window.scrollY + top - 12, behavior:'instant' }); return; }
+  if (event.target.closest('[data-all-products]')) { state.category = ALL_PRODUCTS; state.query = ''; state.gridOpen = false; root.querySelector('#menu-search').value = ''; renderNavigation(); renderResults(); root.querySelector('#category-title')?.focus({ preventScroll:true }); return; }
   if (event.target.closest('[data-open-categories]')) { state.gridOpen = true; renderNavigation(); renderResults(); root.querySelector('#category-index-title')?.focus({ preventScroll:true }); return; }
   const clear = event.target.closest('[data-clear-search]');
   if (clear) { state.query = ''; root.querySelector('#menu-search').value = ''; root.querySelector('[data-clear-search]').hidden = true; renderNavigation(); renderResults(); root.querySelector('#menu-search').focus(); return; }
@@ -139,7 +142,8 @@ async function start() {
     const response = await fetch('/api/v2/catalog', { cache:'no-store' });
     if (!response.ok) throw new Error('No se pudo cargar la carta.');
     state.catalog = await response.json();
-    state.category = null;
+    state.category = state.catalog.categories[0]?.id || null;
+    state.gridOpen = !matchMedia('(min-width: 900px)').matches;
     shell();
   } catch (error) {
     root.innerHTML = `<main class="load-error" role="alert"><h1>La carta no está disponible</h1><p>${html(error.message)}</p><button type="button" data-retry>Reintentar</button></main>`;
@@ -147,3 +151,9 @@ async function start() {
   }
 }
 start();
+matchMedia('(min-width: 900px)').addEventListener('change', (event) => {
+  if (!event.matches || !state.catalog || !state.gridOpen) return;
+  state.gridOpen = false;
+  renderNavigation();
+  renderResults();
+});
