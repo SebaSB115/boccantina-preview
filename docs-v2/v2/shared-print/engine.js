@@ -21,12 +21,12 @@ async function renderer() {
   return loading;
 }
 const tx = (value, language) => typeof value === 'string' ? value : value?.[language] || value?.es || '';
-const ordered = values => [...values].sort((a, b) => (a.position || 0) - (b.position || 0));
+const ordered = (values, key) => [...values].sort((a, b) => (a.position || 0) - (b.position || 0) || String(a[key] || '').localeCompare(String(b[key] || '')));
 export function project(catalog, brand, language) {
   if (!['es', 'en'].includes(language)) throw new Error('Selecciona español o inglés.');
   const groups = brand === 'isabella'
     ? catalog.categories.filter(c => c.visible !== false).map(c => ({ id:c.id, title:tx(c.title, language), items:c.items.filter(i => i.visible !== false).map(i => ({ id:i.id, name:tx(i.name, language), description:tx(i.description, language), price:i.price, options:(i.options || []).map(o => ({ label:tx(o.label, language), price:o.price })), addon:i.addon ? { label:tx(i.addon.label, language), price:i.addon.price } : null })) }))
-    : ordered(catalog.categories.filter(c => c.visible !== false)).map(c => ({ id:c.id, title:language === 'en' ? c.en || c.es : c.es, items:ordered(catalog.products.filter(i => i.visible !== false && i.category === c.id)).map(i => ({ id:i.id, name:language === 'en' ? i.nameEn || i.nameEs : i.nameEs, description:language === 'en' ? i.descEn || i.descEs : i.descEs, price:i.price, options:[], addon:null })) }));
+    : ordered(catalog.categories.filter(c => c.visible !== false), 'es').map(c => ({ id:c.id, title:language === 'en' ? c.en || c.es : c.es, items:ordered(catalog.products.filter(i => i.visible !== false && i.category === c.id), 'nameEs').map(i => ({ id:i.id, name:language === 'en' ? i.nameEn || i.nameEs : i.nameEs, description:language === 'en' ? i.descEn || i.descEs : i.descEs, price:i.price, options:[], addon:null })) }));
   return { layout:1, brand, language, groups:groups.filter(g => g.items.length), publicUrl:catalog.settings?.publicUrl || '' };
 }
 async function digest(value) {
