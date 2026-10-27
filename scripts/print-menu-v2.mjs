@@ -7,7 +7,7 @@ import puppeteer from 'puppeteer-core';
 import { printProjection, renderPrintBody } from '../preview-src/v2/print-layout.js';
 
 const repo = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const browserPath = () => [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/google-chrome'].find((path) => path && existsSync(path));
+const browserPath = () => [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/opt/google/chrome/chrome'].find((path) => path && existsSync(path));
 const fingerprint = (catalog, language) => createHash('sha256').update(JSON.stringify({ language, categories:printProjection(catalog) })).digest('hex');
 const rows = (projection) => new Map(projection.flatMap((group, index) => [[`category:${group.id}`, JSON.stringify({ es:group.es, en:group.en, index })], ...group.products.map((product, position) => [`product:${product.id}`, JSON.stringify({ ...product, category:group.id, position })])]));
 
@@ -53,7 +53,7 @@ export class PrintMenuV2 {
       const body = renderPrintBody(copy, language, `data:image/png;base64,${logo.toString('base64')}`, edition);
       let browser;
       try {
-        browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:['--disable-gpu'], timeout:30000 });
+        browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:process.env.CI ? ['--disable-gpu', '--no-sandbox'] : ['--disable-gpu'], timeout:30000 });
         const page = await browser.newPage();
         await page.setRequestInterception(true);
         page.on('request', (request) => /^(data:|about:)/.test(request.url()) ? request.continue() : request.abort());

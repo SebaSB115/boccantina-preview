@@ -64,7 +64,7 @@ try {
   assert.equal(badCsrf.status, 403);
   assert.equal((await call('/api/v2/admin/print/editions', 'POST', { revision:initial.revision - 1, language:'es' })).response.status, 409);
   const first = await call('/api/v2/admin/print/editions', 'POST', { revision:initial.revision, language:'es' });
-  assert.equal(first.response.status, 201, first.json?.error || stderr);
+  assert.equal(first.response.status, 201, `${first.json?.error || 'Error de PDF'}\n${stderr}`);
   assert.equal(first.json.revision, initial.revision);
   const pdf = await call(`/api/v2/admin/print/${first.json.id}.pdf`);
   assert.equal(pdf.response.status, 200);
@@ -81,16 +81,16 @@ try {
   assert.equal(stale.current, false);
   assert(stale.changes.changed > 0);
   const second = await call('/api/v2/admin/print/editions', 'POST', { revision:changed.json.catalog.revision, language:'es' });
-  assert.equal(second.response.status, 201, second.json?.error);
+  assert.equal(second.response.status, 201, `${second.json?.error || 'Error de PDF'}\n${stderr}`);
   assert.notEqual(first.json.id, second.json.id);
   assert.equal((await call('/api/v2/admin/print/status?lang=es')).json.editions.length, 2);
   assert.equal((await call(`/api/v2/admin/print/${first.json.id}.pdf`)).response.status, 200);
   const english = await call('/api/v2/admin/print/editions', 'POST', { revision:changed.json.catalog.revision, language:'en' });
-  assert.equal(english.response.status, 201, english.json?.error);
+  assert.equal(english.response.status, 201, `${english.json?.error || 'Error de PDF'}\n${stderr}`);
   assert.equal((await call('/api/v2/admin/print/status?lang=en')).json.current, true);
   assert.equal((await call(`/api/v2/admin/print/${english.json.id}.pdf`)).body.subarray(0, 4).toString(), '%PDF');
-  const chrome = [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/google-chrome'].find((path) => path && existsSync(path));
-  browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:['--disable-gpu'] });
+  const chrome = [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/opt/google/chrome/chrome'].find((path) => path && existsSync(path));
+  browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:process.env.CI ? ['--disable-gpu', '--no-sandbox'] : ['--disable-gpu'] });
   for (const width of [1440, 768, 390, 320]) {
     const page = await browser.newPage();
     await page.setViewport({ width, height:900, deviceScaleFactor:1 });
