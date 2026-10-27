@@ -21,7 +21,9 @@ Los extras por plato no se usan en V2. Las rutas de pedidos, cocina, mesas y res
 
 El acceso `demo-boccantina` / `vista2026` sirve **solo para explorar la interfaz**. No protege archivos ni autentica contra el servidor: GitHub Pages es estático. Los cambios de productos, categorías y cuentas quedan en el navegador de cada visitante; no se comparten ni actualizan la carta oficial. No introduzcas usuarios ni contraseñas reales en esta demostración. Los datos locales de `.preview-data-v2/` nunca se incluyen en `docs-v2/`.
 
-En la demo, **Menú para imprimir → Vista previa A4 → Imprimir o guardar PDF** usa los datos del navegador. No crea historial compartido ni genera un archivo en el servidor; por eso el botón **Generar PDF actualizado** está desactivado allí.
+En la demo, **Menú para imprimir → Generar PDF actualizado → Descargar PDF** genera un archivo A4 real desde el catálogo guardado en el navegador. También permite **Vista previa A4** e **Imprimir**. El historial se conserva en IndexedDB al recargar y detecta cambios de contenido. No requiere el servidor de una laptop; tampoco comparte datos entre dispositivos. Descargar los archivos permite conservarlos fuera del navegador.
+
+El motor gratuito y versionado se distribuye desde `isabellas-menu-preview-a/preview-a/shared-print`; consulta el README y `manifest.json` de `preview-src/v2/shared-print`. Las ediciones de esta demo son independientes de las del servidor Node.
 
 ## Ejecutar en local
 

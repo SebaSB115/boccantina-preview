@@ -35,7 +35,22 @@ function notify(message, error = false) {
 function clearNotice() { feedback.hidden = true; feedback.textContent = ''; }
 function confirmDiscard() { return !state.dirty || confirm('Hay cambios sin guardar. ¿Quieres descartarlos?'); }
 function markDirty() { state.dirty = true; }
+let browserPrintService;
+function demoPrint() {
+  return browserPrintService ||= import('/boccantina-preview/v2/shared-print/engine.js').then(({createPrintService}) => createPrintService({
+    brand:'boccantina', readCatalog:() => window.BoccV2DemoCatalog(),
+    logo:new URL('/boccantina-preview/preview/assets/boccantina-logo-transparent.png', location.origin).href
+  }));
+}
 async function api(path, options = {}) {
+  if (document.querySelector('meta[name="boccantina-demo-base"]') && /\/api\/v2\/admin\/print\//.test(path)) {
+    const service = await demoPrint();
+    if (options.method === 'POST') {
+      const data = JSON.parse(options.body);
+      return service.generate(data.revision, data.language);
+    }
+    return service.status(new URL(path, location.origin).searchParams.get('lang') || 'es');
+  }
   const headers = { ...(options.headers || {}) };
   if (options.body && !(options.body instanceof Blob)) headers['content-type'] = 'application/json';
   if (options.method && options.method !== 'GET') headers['x-csrf-token'] = state.session.csrf;
@@ -129,12 +144,11 @@ function renderPrint() {
   const editions = status?.editions || [];
   const language = state.printLanguage;
   content.innerHTML = `<div class="print-workspace"><div class="print-intro"><h2>Edición para el local</h2><p>La carta física usa los nombres, descripciones, categorías, orden y precios guardados en Productos. Los platos ocultos se excluyen; la disponibilidad temporal no cambia una edición impresa.</p></div>
-    <div class="print-controls"><label>Idioma de la edición<select data-print-language><option value="es" ${language === 'es' ? 'selected' : ''}>Español</option><option value="en" ${language === 'en' ? 'selected' : ''}>English</option></select></label><a class="button" href="/boccantina-preview/imprimir/?lang=${language}" target="_blank" rel="noopener">Vista previa A4 ↗</a><button class="button button--primary" type="button" data-generate-print ${demo || state.printBusy || status?.current ? 'disabled' : ''}>Generar PDF actualizado</button><button class="button" type="button" data-refresh-print>Actualizar estado</button></div>
-    <p class="print-state" role="status">${demo ? 'Demostración pública: usa «Vista previa A4» para imprimir o guardar un PDF desde el navegador. No se crea un archivo compartido en el servidor.' : !status ? 'Consultando ediciones…' : status.current ? 'El PDF de este idioma coincide con la carta actual.' : `Pendiente de generar: ${status.changes.added} incorporaciones, ${status.changes.changed} cambios y ${status.changes.removed} retiradas desde la última edición.`}</p>
-    ${!demo ? `<h3>Historial de ediciones</h3><ul class="print-editions">${editions.length ? editions.map((edition) => `<li><div><strong>${edition.language === 'es' ? 'Español' : 'English'} · revisión ${edition.revision}</strong><span>${escapeHtml(new Date(edition.createdAt).toLocaleString('es-CR'))} · ${escapeHtml(edition.author)}</span><small>${edition.current ? 'Contenido vigente' : 'Edición conservada'}</small></div><a class="button" href="/boccantina-preview/api/v2/admin/print/${encodeURIComponent(edition.id)}.pdf">Descargar PDF</a></li>`).join('') : '<li>Aún no hay ediciones archivadas.</li>'}</ul>` : ''}</div>`;
+    <div class="print-controls"><label>Idioma de la edición<select data-print-language><option value="es" ${language === 'es' ? 'selected' : ''}>Español</option><option value="en" ${language === 'en' ? 'selected' : ''}>English</option></select></label><a class="button" data-preview-print href="/boccantina-preview/imprimir/?lang=${language}" target="_blank" rel="noopener">Vista previa A4 ↗</a>${demo ? '<button class="button" type="button" data-browser-print>Imprimir</button>' : ''}<button class="button button--primary" type="button" data-generate-print ${state.printBusy || !status || status.current ? 'disabled' : ''}>${state.printBusy ? 'Preparando PDF…' : 'Generar PDF actualizado'}</button><button class="button" type="button" data-refresh-print>Actualizar estado</button></div>
+    <p class="print-state" role="status">${!status ? 'Consultando ediciones…' : status.current ? 'El PDF de este idioma coincide con la carta actual.' : `Pendiente de generar: ${status.changes.added} incorporaciones, ${status.changes.changed} cambios y ${status.changes.removed} retiradas desde la última edición.`}</p>
+    ${demo ? '<p class=help>PDF e historial guardados en este navegador. Descarga el archivo para compartirlo o imprimirlo.</p>' : ''}<h3>Historial de ediciones</h3><ul class="print-editions">${editions.length ? editions.map((edition) => `<li><div><strong>${edition.language === 'es' ? 'Español' : 'English'} · revisión ${edition.revision}</strong><span>${escapeHtml(new Date(edition.createdAt).toLocaleString('es-CR'))} · ${escapeHtml(edition.author)}</span><small>${edition.current ? 'Contenido vigente' : 'Edición conservada'}</small></div><a class="button" data-edition="${escapeHtml(edition.id)}" href="/boccantina-preview/api/v2/admin/print/${encodeURIComponent(edition.id)}.pdf">Descargar PDF</a></li>`).join('') : '<li>Aún no hay ediciones archivadas.</li>'}</ul></div>`;
 }
 async function refreshPrint() {
-  if (document.querySelector('meta[name="boccantina-demo-base"]')) { state.printStatus = null; renderPrint(); return; }
   state.printStatus = await api(`/api/v2/admin/print/status?lang=${state.printLanguage}`);
   if (state.view === 'print') renderPrint();
 }
@@ -268,10 +282,18 @@ content.addEventListener('submit', (event) => {
 });
 content.addEventListener('click', (event) => {
   const target = event.target;
+  if (document.querySelector('meta[name="boccantina-demo-base"]')) {
+    const action = target.closest('[data-preview-print],[data-browser-print],[data-edition]');
+    if(action) {
+      event.preventDefault();const popup=action.dataset.edition?null:window.open('','_blank');
+      demoPrint().then(service=>action.dataset.edition?service.download(action.dataset.edition):service.preview(state.printLanguage,popup,action.hasAttribute('data-browser-print')))
+        .catch(error=>{popup?.close();notify(error.message,true);});return;
+    }
+  }
   if (target.closest('[data-refresh-print]')) { refreshPrint().catch((error) => notify(error.message, true)); return; }
   if (target.closest('[data-generate-print]')) {
     state.printBusy = true; renderPrint();
-    api('/boccantina-preview/api/v2/admin/print/editions', { method:'POST', body:JSON.stringify({ revision:state.catalog.revision, language:state.printLanguage }) })
+    api('/boccantina-preview/api/v2/admin/print/editions', { method:'POST', body:JSON.stringify({ revision:state.printStatus?.revision ?? state.catalog.revision, language:state.printLanguage }) })
       .then(() => refreshPrint()).then(() => notify('PDF actualizado y archivado. Puedes descargarlo en el historial.'))
       .catch((error) => notify(error.message, true)).finally(() => { state.printBusy = false; if (state.view === 'print') renderPrint(); });
     return;

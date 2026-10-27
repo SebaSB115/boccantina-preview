@@ -1,0 +1,14 @@
+{
+  "source": "isabellas-menu-preview-a/preview-a/shared-print",
+  "pdfmake": "0.3.11",
+  "files": {
+    "engine.js": "b8e142f909d88ee8b5bab80f73be802aa7f48f1823ee80988f4946d234af5c03",
+    "vendor/pdfmake.min.js": "faaee53f8dcf48b0934553665809d8180e20e435b654f633df2f18f9dbdeaa88",
+    "vendor/vfs_fonts.js": "1483ed267fe00ad90a3834441b019d856dd41ed079b2614404b2fcef425db6fc",
+    "vendor/Times.js": "f5f5dcce6abde4f33705bc6d3dbb5a688ef51cd6a45a6d54fe7228a2d4284759",
+    "vendor/LICENSE-pdfmake.txt": "ab919430421c2e244dbb8694d70916eae16235b75c0ea07e9a6c67cd4265c954",
+    "vendor/NotoSans-Regular.ttf": "b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5",
+    "vendor/NotoSans-SemiBold.ttf": "87a8b90ece1e89746b544e4e086f85a3710e41485a8078f9be874837dfad45d5",
+    "vendor/LICENSE-NotoSans.txt": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb"
+  }
+}
