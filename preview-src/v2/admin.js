@@ -1,7 +1,7 @@
 const state = {
   catalog:null, users:[], session:null, view:'products', selectedProduct:null,
   selectedCategory:null, selectedUser:null, userFormOpen:false, mobileMode:'list', dirty:false,
-  search:'', filter:'all', qr:null
+  search:'', filter:'all', qr:null, printLanguage:'es', printStatus:null, printBusy:false
 };
 const content = document.getElementById('view-content');
 const feedback = document.getElementById('feedback');
@@ -122,12 +122,29 @@ function renderQr() {
   const value = state.qr;
   content.innerHTML = value ? `<div class="qr-section"><div class="qr-frame"><img src="/api/v2/admin/qr.svg" alt="Código QR de la carta digital de Boccantina"></div><div class="qr-details"><h2>Escanea para consultar la carta</h2><a class="qr-link" href="${escapeHtml(value.url)}" target="_blank" rel="noopener">${escapeHtml(value.url)}</a>${value.local ? '<p class="warning">Este QR abre una dirección local de prueba. Antes de imprimirlo para clientes, configura la URL pública HTTPS de la carta.</p>' : ''}<div class="qr-actions"><button class="button button--primary" type="button" data-copy-qr>Copiar enlace</button><a class="button" href="/api/v2/admin/qr.svg?download=1">Descargar QR en SVG</a></div></div></div>` : '<p class="empty">Cargando QR…</p>';
 }
+function renderPrint() {
+  heading('Menú para imprimir', 'Una edición A4 propia de Boccantina, generada con la carta actual.');
+  const demo = Boolean(document.querySelector('meta[name="boccantina-demo-base"]'));
+  const status = state.printStatus;
+  const editions = status?.editions || [];
+  const language = state.printLanguage;
+  content.innerHTML = `<div class="print-workspace"><div class="print-intro"><h2>Edición para el local</h2><p>La carta física usa los nombres, descripciones, categorías, orden y precios guardados en Productos. Los platos ocultos se excluyen; la disponibilidad temporal no cambia una edición impresa.</p></div>
+    <div class="print-controls"><label>Idioma de la edición<select data-print-language><option value="es" ${language === 'es' ? 'selected' : ''}>Español</option><option value="en" ${language === 'en' ? 'selected' : ''}>English</option></select></label><a class="button" href="/imprimir/?lang=${language}" target="_blank" rel="noopener">Vista previa A4 ↗</a><button class="button button--primary" type="button" data-generate-print ${demo || state.printBusy || status?.current ? 'disabled' : ''}>Generar PDF actualizado</button><button class="button" type="button" data-refresh-print>Actualizar estado</button></div>
+    <p class="print-state" role="status">${demo ? 'Demostración pública: usa «Vista previa A4» para imprimir o guardar un PDF desde el navegador. No se crea un archivo compartido en el servidor.' : !status ? 'Consultando ediciones…' : status.current ? 'El PDF de este idioma coincide con la carta actual.' : `Pendiente de generar: ${status.changes.added} incorporaciones, ${status.changes.changed} cambios y ${status.changes.removed} retiradas desde la última edición.`}</p>
+    ${!demo ? `<h3>Historial de ediciones</h3><ul class="print-editions">${editions.length ? editions.map((edition) => `<li><div><strong>${edition.language === 'es' ? 'Español' : 'English'} · revisión ${edition.revision}</strong><span>${escapeHtml(new Date(edition.createdAt).toLocaleString('es-CR'))} · ${escapeHtml(edition.author)}</span><small>${edition.current ? 'Contenido vigente' : 'Edición conservada'}</small></div><a class="button" href="/api/v2/admin/print/${encodeURIComponent(edition.id)}.pdf">Descargar PDF</a></li>`).join('') : '<li>Aún no hay ediciones archivadas.</li>'}</ul>` : ''}</div>`;
+}
+async function refreshPrint() {
+  if (document.querySelector('meta[name="boccantina-demo-base"]')) { state.printStatus = null; renderPrint(); return; }
+  state.printStatus = await api(`/api/v2/admin/print/status?lang=${state.printLanguage}`);
+  if (state.view === 'print') renderPrint();
+}
 function render() {
   clearNotice();
   if (state.view === 'products') renderProducts();
   else if (state.view === 'categories') renderCategories();
   else if (state.view === 'users') renderUsers();
-  else renderQr();
+  else if (state.view === 'qr') renderQr();
+  else renderPrint();
 }
 async function navigate(view) {
   if (view === state.view) return true;
@@ -136,6 +153,7 @@ async function navigate(view) {
   document.getElementById('main').focus({ preventScroll:true });
   if (view === 'users') { state.users = (await api('/api/v2/admin/users')).users; render(); }
   if (view === 'qr') { state.qr = await api('/api/v2/admin/qr'); render(); }
+  if (view === 'print') await refreshPrint();
   return true;
 }
 function formValue(form, key) { return form.elements.namedItem(key)?.value ?? ''; }
@@ -223,6 +241,7 @@ content.addEventListener('input', (event) => {
   if (event.target.closest('form')) markDirty();
 });
 content.addEventListener('change', (event) => {
+  if (event.target.matches('[data-print-language]')) { state.printLanguage = event.target.value; refreshPrint().catch((error) => notify(error.message, true)); return; }
   if (event.target.matches('[data-filter]')) { state.filter = event.target.value; content.querySelector('[data-items]').innerHTML = productRows(); return; }
   if (event.target.closest('form')) markDirty();
   if (!event.target.matches('[data-image-upload]')) return;
@@ -249,6 +268,14 @@ content.addEventListener('submit', (event) => {
 });
 content.addEventListener('click', (event) => {
   const target = event.target;
+  if (target.closest('[data-refresh-print]')) { refreshPrint().catch((error) => notify(error.message, true)); return; }
+  if (target.closest('[data-generate-print]')) {
+    state.printBusy = true; renderPrint();
+    api('/api/v2/admin/print/editions', { method:'POST', body:JSON.stringify({ revision:state.catalog.revision, language:state.printLanguage }) })
+      .then(() => refreshPrint()).then(() => notify('PDF actualizado y archivado. Puedes descargarlo en el historial.'))
+      .catch((error) => notify(error.message, true)).finally(() => { state.printBusy = false; if (state.view === 'print') renderPrint(); });
+    return;
+  }
   const product = target.closest('[data-select-product]');
   const category = target.closest('[data-select-category]');
   const user = target.closest('[data-edit-user]');

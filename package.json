@@ -14,12 +14,15 @@
     "check:pages:v2": "node scripts/check-v2-pages.mjs",
     "admin:setup:v2": "node scripts/setup-v2-admin.mjs",
     "check:v2": "node scripts/check-v2.mjs",
+    "check:print:v2": "node scripts/check-print-v2.mjs",
+    "check:print:pages:v2": "node scripts/check-print-pages-v2.mjs",
     "admin:setup": "node scripts/setup-admin.mjs",
     "check:admin": "node scripts/check-admin.mjs",
     "check:mixed-orders": "node scripts/check-mixed-orders.mjs",
     "check:catalog-ops": "node scripts/check-catalog-ops.mjs"
   },
   "dependencies": {
+    "puppeteer-core": "^25.16.0",
     "qrcode": "^1.5.4",
     "website-scraper": "6.0.0"
   }

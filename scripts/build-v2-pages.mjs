@@ -25,14 +25,14 @@ async function copy(source, relative) {
   const file = await readFile(source);
   await write(relative, file);
 }
-const rewriteRoutes = (source) => source.replace(/(?<=["'(=])\/(?=(?:v2|preview|admin|carta|api|wp-content)\/)/g, `${base}/`);
+const rewriteRoutes = (source) => source.replace(/(?<=["'(=])\/(?=(?:v2|preview|admin|carta|imprimir|api|wp-content)\/)/g, `${base}/`);
 const injectDemo = (html, script) => {
   const before = `<script src="${base}/v2/${script}" defer></script>`;
   return html.replace(before, `<meta name="boccantina-demo-base" content="${base}">\n  <script src="${base}/v2/seed.js" defer></script>\n  <script src="${base}/v2/demo-api.js" defer></script>\n  ${before}`);
 };
 await cp(resolve(repo, 'preview-src/v2'), resolve(output, 'v2'), { recursive:true });
-for (const name of ['admin.html','carta.html','login.html']) await rm(resolve(output, 'v2', name));
-for (const name of ['admin.js','admin.css','carta.js','carta.css','login.js','login.html','admin.html','carta.html']) {
+for (const name of ['admin.html','carta.html','login.html','print.html']) await rm(resolve(output, 'v2', name));
+for (const name of ['admin.js','admin.css','carta.js','carta.css','login.js','login.html','admin.html','carta.html','print.html']) {
   const path = resolve(repo, 'preview-src/v2', name);
   let source = rewriteRoutes(await readFile(path, 'utf8'));
   if (name === 'login.html') {
@@ -49,12 +49,13 @@ for (const name of ['admin.js','admin.css','carta.js','carta.css','login.js','lo
     source = injectDemo(source, 'carta.js')
       .replace('<div id="menu-root">', '<p class="public-demo-banner">Demostración pública de V2. Los cambios de esta prueba permanecen solo en tu navegador.</p>\n  <div id="menu-root">');
   }
+  if (name === 'print.html') source = source.replace(`<script type="module" src="${base}/v2/print.js"></script>`, `<meta name="boccantina-demo-base" content="${base}"><script src="${base}/v2/seed.js" defer></script><script src="${base}/v2/demo-api.js" defer></script><script type="module" src="${base}/v2/print.js"></script>`);
   if (name === 'admin.js') source = source
     .replace('Todas las personas de esta versión tienen el mismo acceso de administrador.', 'Cuentas de prueba guardadas solo en este navegador.')
     .replace('href="/boccantina-preview/api/v2/admin/qr.svg?download=1"', 'href="/boccantina-preview/api/v2/admin/qr.svg" download="boccantina-carta-qr.svg"');
   if (name === 'carta.css') source += '\n.public-demo-banner{margin:0;padding:8px 16px;border-bottom:1px solid var(--line);background:#211e23;color:var(--muted);font-size:.78rem;text-align:center}\n';
   const destination = name.endsWith('.html') ? name === 'login.html' ? 'admin/login/index.html'
-    : name === 'admin.html' ? 'admin/index.html' : 'carta/index.html' : `v2/${name}`;
+    : name === 'admin.html' ? 'admin/index.html' : name === 'print.html' ? 'imprimir/index.html' : 'carta/index.html' : `v2/${name}`;
   await write(destination, source);
 }
 

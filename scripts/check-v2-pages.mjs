@@ -8,6 +8,7 @@ const selector = await read('central/index.html');
 const login = await read('admin/login/index.html');
 const admin = await read('admin/index.html');
 const carta = await read('carta/index.html');
+const print = await read('imprimir/index.html');
 const seed = await read('v2/seed.js');
 const demoApi = await read('v2/demo-api.js');
 assert.match(selector, /href="https:\/\/sebasb115\.github\.io\/isabellas-menu-preview-a\/admin\/"/);
@@ -19,6 +20,10 @@ assert.match(login, /id="login-form" method="post"/);
 assert.match(login, /type="submit" disabled/);
 assert.match(admin, /DEMO PÚBLICA · CAMBIOS SOLO EN ESTE NAVEGADOR/);
 assert.match(carta, /permanecen solo en tu navegador/);
+assert.match(admin, /Menú para imprimir/);
+assert.match(print, /boccantina-demo-base/);
+assert.match(print, /\/v2\/print\.js/);
+assert((await stat(resolve(root, 'docs-v2/v2/print.css'))).size > 1000);
 for (const html of [login, admin, carta]) {
   assert(html.indexOf('/v2/seed.js') < html.indexOf('/v2/demo-api.js'));
   assert(html.indexOf('/v2/demo-api.js') < html.indexOf('/v2/' + (html === login ? 'login.js' : html === admin ? 'admin.js' : 'carta.js')));

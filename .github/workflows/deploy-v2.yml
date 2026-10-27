@@ -34,7 +34,9 @@ jobs:
       - name: Verify V2 and public demo
         run: |
           npm run check:v2
+          npm run check:print:v2
           npm run check:pages:v2
+          npm run check:print:pages:v2
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:

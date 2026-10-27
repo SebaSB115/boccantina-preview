@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 import { V2Data, field, makeUser, newId, publicCatalog, publicUser, validateCategory, validateProduct } from './v2-data.mjs';
 import { hashCentralPassword } from './central-users.mjs';
+import { PrintMenuV2 } from './print-menu-v2.mjs';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dataDirectory = resolve(process.env.BOCCANTINA_V2_DATA_DIR || join(repo, '.preview-data-v2'));
@@ -13,6 +14,7 @@ const publicRoot = join(repo, 'snapshot', 'boccantina.com');
 const port = Number(process.env.BOCCANTINA_V2_PORT) || 4175;
 const host = process.env.BOCCANTINA_V2_HOST || '127.0.0.1';
 const data = await new V2Data(dataDirectory).init();
+const printMenu = new PrintMenuV2(dataDirectory);
 const sessions = new Map();
 const failures = new Map();
 const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.woff':'font/woff2', '.woff2':'font/woff2' };
@@ -190,7 +192,7 @@ async function handler(request, response) {
     return send(response, 200, `window.BoccMenuCatalog = Object.freeze(${serialized});`, 'text/javascript; charset=utf-8');
   }
   if (request.method === 'GET' && path === '/') return send(response, 302, '', 'text/plain; charset=utf-8', { location:'/carta/' });
-  if (request.method === 'GET' && (path === '/carta' || path === '/admin/login' || path === '/admin')) return send(response, 308, '', 'text/plain; charset=utf-8', { location:`${path}/${url.search}` });
+  if (request.method === 'GET' && (path === '/carta' || path === '/admin/login' || path === '/admin' || path === '/imprimir')) return send(response, 308, '', 'text/plain; charset=utf-8', { location:`${path}/${url.search}` });
   if (request.method === 'GET' && path === '/carta/') return sendFile(response, join(repo, 'preview-src/v2/carta.html'));
   if (request.method === 'GET' && path === '/admin/login/') return sendFile(response, join(repo, 'preview-src/v2/login.html'));
 
@@ -214,13 +216,14 @@ async function handler(request, response) {
     return send(response, 200, { user:publicUser(user), csrf }, 'application/json; charset=utf-8', { 'set-cookie':cookie(token, 8 * 60 * 60) });
   }
 
-  if (path.startsWith('/api/v2/admin/') || path === '/admin/') {
+  if (path.startsWith('/api/v2/admin/') || path === '/admin/' || path === '/imprimir/') {
     const session = sessionFor(request);
     if (!session) {
-      if (path === '/admin/') return send(response, 303, '', 'text/plain; charset=utf-8', { location:'/admin/login/' });
+      if (path === '/admin/' || path === '/imprimir/') return send(response, 303, '', 'text/plain; charset=utf-8', { location:'/admin/login/' });
       return failure(response, 401, 'Inicia sesión como administrador.');
     }
     if (path === '/admin/' && request.method === 'GET') return sendFile(response, join(repo, 'preview-src/v2/admin.html'));
+    if (path === '/imprimir/' && request.method === 'GET') return sendFile(response, join(repo, 'preview-src/v2/print.html'));
     if (path === '/api/v2/admin/session' && request.method === 'GET') return send(response, 200, { user:publicUser(session.user), csrf:session.csrf });
     if (request.method !== 'GET') {
       if (!originAllowed(request) || request.headers['x-csrf-token'] !== session.csrf) return failure(response, 403, 'La sesión de seguridad no es válida. Recarga la página.');
@@ -230,6 +233,16 @@ async function handler(request, response) {
       return send(response, 200, { ok:true }, 'application/json; charset=utf-8', { 'set-cookie':cookie('', 0) });
     }
     if (path === '/api/v2/admin/catalog' && request.method === 'GET') return send(response, 200, data.value.catalog);
+    if (path === '/api/v2/admin/print/status' && request.method === 'GET') return send(response, 200, await printMenu.status(data.value.catalog, url.searchParams.get('lang') || 'es'));
+    if (path === '/api/v2/admin/print/editions' && request.method === 'POST') {
+      const input = await jsonBody(request);
+      return send(response, 201, await printMenu.generate(data.value.catalog, input.revision, input.language, session.user.name));
+    }
+    const printPdf = /^\/api\/v2\/admin\/print\/([a-f0-9-]{36})\.pdf$/.exec(path);
+    if (printPdf && request.method === 'GET') {
+      const pdf = await printMenu.pdf(printPdf[1]);
+      return send(response, 200, pdf, 'application/pdf', { 'content-disposition':`attachment; filename="Boccantina-menu-${printPdf[1]}.pdf"` });
+    }
     if (path === '/api/v2/admin/users' && request.method === 'GET') return send(response, 200, { users:data.value.users.map(publicUser) });
     if (path === '/api/v2/admin/qr' && request.method === 'GET') return send(response, 200, { url:publicMenuUrl(), local:!process.env.BOCCANTINA_V2_PUBLIC_URL });
     if (path === '/api/v2/admin/qr.svg' && request.method === 'GET') {
