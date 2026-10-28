@@ -68,7 +68,7 @@ export async function createPrintDefinition(snapshot, edition, logo, pdf) {
     })))
   };
   const container = document.createElement('div');
-  container.innerHTML = renderPrintBody(catalog, snapshot.language, logo, {...edition,proposal:snapshot.proposal}, texture);
+  container.innerHTML = renderPrintBody(catalog, snapshot.language, logo, edition, texture);
   const menu = container.firstElementChild;
   menu.classList.add('print-measure'); document.body.append(menu);
   try {
@@ -85,8 +85,8 @@ export async function createPrintDefinition(snapshot, edition, logo, pdf) {
         content.push({canvas:[{type:'line',x1:pt(rect.left-sheet.left),x2:pt(rect.right-sheet.left),y1:pt(rect.bottom-sheet.top),y2:pt(rect.bottom-sheet.top),lineWidth:0.56,lineColor:'#74603a'}],absolutePosition:{x:0,y:0}});
       }
     });
-    const factor=paperScale(snapshot.size),proposal=snapshot.proposal || 'actual';
-    const background={stack:[...(proposal==='actual'?[{image:'marble',width:595.28,height:841.89,absolutePosition:{x:0,y:0}}]:[]),{svg:paperArtwork(proposal),width:595.28,height:841.89,absolutePosition:{x:0,y:0}}]};
+    const factor=paperScale(snapshot.size);
+    const background={stack:[{image:'marble',width:595.28,height:841.89,absolutePosition:{x:0,y:0}},...(snapshot.design?.ornament===false?[]:[{svg:paperArtwork(snapshot.design?.columns!==1),width:595.28,height:841.89,absolutePosition:{x:0,y:0}}])]};
     return {
       info:{title:'Boccantina · '+(snapshot.language === 'en' ? 'Printed menu' : 'Menú impreso'),author:'Boccantina'},
       pageSize:snapshot.size || 'A4',pageMargins:0,

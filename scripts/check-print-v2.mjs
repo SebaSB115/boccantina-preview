@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
+import { randomBytes,randomUUID } from 'node:crypto';
+import {printDesignDefaults} from '../preview-src/v2/shared-print/design.js';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
@@ -89,14 +90,15 @@ try {
   assert.equal(english.response.status, 201, `${english.json?.error || 'Error de PDF'}\n${stderr}`);
   assert.equal((await call('/api/v2/admin/print/status?lang=en')).json.current, true);
   assert.equal((await call(`/api/v2/admin/print/${english.json.id}.pdf`)).body.subarray(0, 4).toString(), '%PDF');
-  for(const [proposal,size,expected] of [['sobria','A3',841.89],['editorial','A2',1190.55]]){
-    const variant=await call('/api/v2/admin/print/editions','POST',{revision:changed.json.catalog.revision,language:'es',proposal,size});
+  for(const [size,expected,columns] of [['A3',841.89,1],['A2',1190.55,2]]){
+    const proposal='p-'+randomUUID(),design={...printDesignDefaults('boccantina'),columns,margin:columns===1?25:18};
+    const variant=await call('/api/v2/admin/print/editions','POST',{revision:changed.json.catalog.revision,language:'es',proposal,size,design});
     assert.equal(variant.response.status,201,variant.json?.error);
     const variantPdf=await call(`/api/v2/admin/print/${variant.json.id}.pdf`);
     const media=variantPdf.body.toString('latin1').match(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)/);
     assert(media && [Number(media[1]),Number(media[2])].some(value=>Math.abs(value-expected)<4),`${proposal} ${size}: tamaño PDF incorrecto ${(variantPdf.body.toString('latin1').match(/\/MediaBox\s*\[[^\]]+/g)||[]).slice(0,5).join(' | ')}`);
     assert((variantPdf.body.toString('latin1').match(/\/Type\s*\/Page\b/g)||[]).length<=10,`${proposal} ${size}: paginación inesperada`);
-    assert.equal((await call(`/api/v2/admin/print/status?lang=es&proposal=${proposal}&size=${size}`)).json.current,true);
+    assert.equal((await call(`/api/v2/admin/print/status?lang=es&proposal=${proposal}&size=${size}&design=${encodeURIComponent(JSON.stringify(design))}`)).json.current,true);
   }
   const chrome = [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/opt/google/chrome/chrome'].find((path) => path && existsSync(path));
   browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:process.env.CI ? ['--disable-gpu', '--no-sandbox'] : ['--disable-gpu'] });
@@ -106,12 +108,12 @@ try {
     await page.setCookie({ name:'boccantina_v2', value:cookie.split('=')[1], domain:'127.0.0.1', path:'/' });
     await page.goto(`${base}/admin/`, { waitUntil:'networkidle0' });
     if (await page.evaluate(() => document.body.dataset.theme) !== 'blue') await page.click('#theme-button');
-    await page.click('#sidebar-toggle');
+    if(!await page.evaluate(()=>document.body.classList.contains('is-sidebar-open')))await page.click('#sidebar-toggle');
     await page.click('[data-view="print"]');
     await page.waitForSelector('.print-workspace');
-    await page.waitForFunction(() => document.querySelectorAll('.print-editions a[href$=".pdf"]').length === 5);
+    await page.waitForFunction(() => document.querySelectorAll('.print-editions a[href$=".pdf"]').length === 3);
     const adminResult = await page.evaluate(() => ({ width:document.documentElement.scrollWidth, viewport:innerWidth, preview:document.querySelector('.print-controls a')?.href, archived:document.querySelectorAll('.print-editions li').length }));
-    assert(adminResult.width <= width + 1 && adminResult.preview?.includes('/imprimir/') && adminResult.archived === 5, JSON.stringify(adminResult));
+    assert(adminResult.width <= width + 1 && adminResult.preview?.includes('/imprimir/') && adminResult.archived === 3, JSON.stringify(adminResult));
     if ([1440, 390].includes(width)) await page.screenshot({ path:join(directory, `print-admin-${width}.png`) });
     await page.click('#theme-button');
     assert.equal(await page.evaluate(() => document.body.dataset.theme), 'gold');

@@ -1,4 +1,5 @@
 // Shared paper composition. Both PDF engines use these measured pages.
+import {normalizePrintDesign} from './shared-print/design.js';
 export const PRINT_DESIGN_VERSION = 'boccantina-gold-2';
 const escapeHtml = (value = '') => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const ordered = (items, key) => [...items].sort((a, b) => a.position - b.position || String(a[key] || '').localeCompare(String(b[key] || '')));
@@ -12,9 +13,7 @@ export function printProjection(catalog) {
   })).filter(category => category.products.length);
 }
 
-export function paperArtwork(proposal = 'actual') {
-  if (proposal === 'sobria') return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123"><rect width="794" height="1123" fill="#151515"/><path d="M31 31H763M31 1092H763" stroke="#b99b5d" stroke-width="2"/></svg>';
-  if (proposal === 'editorial') return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123"><rect width="794" height="1123" fill="#211c1b"/><path d="M26 26H768M26 1097H768" stroke="#b99b5d" stroke-width="2"/><path d="M397 225V1040" stroke="#7e6743" stroke-width="1"/></svg>';
+export function paperArtwork(centerRule=true) {
   const corner = `<g fill="none" stroke="#b99b5d" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
     <path d="M2 76V2H76M7 68V7H68M2 44C15 44 26 35 26 22S13 8 13 18C13 27 34 27 43 15S61 10 56 20C52 29 41 24 47 18M7 55C17 53 25 45 28 35M35 28C45 25 53 17 55 7"/>
     <path d="M18 39C4 37 10 25 16 28S20 36 18 39ZM39 18C37 4 25 10 28 16S36 20 39 18ZM32 29C27 20 35 15 38 22S35 28 32 29ZM29 32C20 27 15 35 22 38S28 35 29 32Z"/>
@@ -23,7 +22,7 @@ export function paperArtwork(proposal = 'actual') {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123" width="794" height="1123" aria-hidden="true">
     <rect width="794" height="1123" fill="#111210" opacity=".62"/>
     <g fill="none" stroke="#b99b5d"><path d="M100 29H694M765 100V1023M694 1094H100M29 1023V100" stroke-width="1.2"/><path d="M96 34H698M760 96V1027M698 1089H96M34 1027V96" stroke-width=".5"/>
-    <path d="M397 245V1030" stroke-width=".55" opacity=".6"/></g>
+    ${centerRule?'<path d="M397 245V1030" stroke-width=".55" opacity=".6"/>':''}</g>
     <g transform="translate(27 27)">${corner}</g><g transform="translate(767 27) scale(-1 1)">${corner}</g><g transform="translate(27 1096) scale(1 -1)">${corner}</g><g transform="translate(767 1096) scale(-1 -1)">${corner}</g>
     <g fill="none" stroke="#b99b5d" stroke-width="1.1"><path d="M306 65H345C355 65 357 52 349 52S343 63 355 63C374 63 378 50 397 50S420 63 439 63C451 63 453 52 445 52S439 65 449 65H488M329 73H372L397 64 422 73H465"/><path d="M397 39 401 44 397 49 393 44Z" fill="#b99b5d"/>
     <path d="M235 215H371L397 222 423 215H559M377 213 397 205 417 213"/><path d="M393 213 397 209 401 213 397 217Z" fill="#b99b5d"/>
@@ -41,12 +40,13 @@ function productMarkup(item, en) {
 export function renderPrintBody(catalog, language = 'es', logo = new URL('../preview/assets/boccantina-logo-transparent.png', import.meta.url).href, edition = {}, texture = new URL('./assets/print-marble-black.png', import.meta.url).href) {
   if (!['es', 'en'].includes(language)) throw new Error('Idioma de impresión no válido.');
   const en = language === 'en', groups = printProjection(catalog);
+  const design=edition.design?normalizePrintDesign(edition.design,'boccantina'):null;
+  const style=design?` style="--print-columns:${design.columns};--print-margin:${design.margin}mm;--print-gap:${design.gutter}mm;--print-logo:${design.logoWidth}mm;--print-title:${design.titleSize}pt;--print-body:${design.bodySize}pt;--print-item-gap:${design.itemSpacing}mm;--print-logo-align:${design.logoAlign==='left'?'flex-start':'center'}"`:'';
   const date = edition.createdAt ? new Date(edition.createdAt).toLocaleDateString(en ? 'en-US' : 'es-CR') : (en ? 'Preview' : 'Vista previa');
-  const proposal=['actual','sobria','editorial'].includes(edition.proposal)?edition.proposal:'actual';
-  return `<main class="print-menu" data-language="${language}" data-proposal="${proposal}" aria-label="${en ? 'Printed menu' : 'Menú para imprimir'}">
+  return `<main class="print-menu" data-language="${language}" data-ornament="${design?.ornament===false?'false':'true'}"${style} aria-label="${en ? 'Printed menu' : 'Menú para imprimir'}">
     <template data-print-source>${groups.map(group => `<section data-group="${escapeHtml(group.id)}"><h2>${escapeHtml(en ? group.en || group.es : group.es)}</h2>${group.products.map(item => productMarkup(item, en)).join('')}</section>`).join('')}</template>
     <template data-print-paper><div class="print-page"><section class="print-sheet">
-      <div class="paper-art">${proposal==='actual'?`<img src="${escapeHtml(texture)}" alt="" class="paper-texture">`:''}${paperArtwork(proposal)}</div>
+      <div class="paper-art"><img src="${escapeHtml(texture)}" alt="" class="paper-texture">${paperArtwork(design?.columns!==1)}</div>
       <header class="print-masthead"><img src="${escapeHtml(logo)}" alt="Boccantina · Cantina de vinos" width="401" height="98"><h1>${en ? 'MENU' : 'MENÚ'}</h1></header>
       <div class="print-columns"><div class="print-column"></div><div class="print-column"></div></div>
       <footer class="print-footer"><span>${en ? 'Prices in Costa Rican colones' : 'Precios en colones costarricenses'}</span><span data-page-number></span></footer>
@@ -64,9 +64,9 @@ export async function paginatePrint(menu) {
   const groups = [...source.content.children], en = menu.dataset.language === 'en';
   let column, columns, index = 1;
   function nextColumn() {
-    if (index === 1) {
+    if (!columns || index === columns.length - 1) {
       const page = paper.content.firstElementChild.cloneNode(true);
-      menu.append(page); columns = page.querySelectorAll('.print-column'); index = 0;
+      menu.append(page); columns = [...page.querySelectorAll('.print-column')].filter(c=>getComputedStyle(c).display!=='none'); index = 0;
     } else index++;
     column = columns[index];
   }
@@ -116,7 +116,7 @@ export async function paginatePrint(menu) {
   // Balance the final sheet at category boundaries, preserving reading order.
   const [left, right] = pages.at(-1).querySelectorAll('.print-column');
   const used = col => col.lastElementChild ? col.lastElementChild.getBoundingClientRect().bottom - col.getBoundingClientRect().top : 0;
-  for (let attempt = 0; attempt < groups.length; attempt++) {
+  for (let attempt = 0; right && attempt < groups.length; attempt++) {
     const lastHead = [...left.querySelectorAll('.chapter-head')].at(-1);
     if (!lastHead?.previousElementSibling || used(left) <= used(right)) break;
     const difference = Math.abs(used(left) - used(right));

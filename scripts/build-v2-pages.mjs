@@ -28,7 +28,7 @@ async function copy(source, relative) {
 }
 const rewriteRoutes = (source) => source.replace(/(?<=["'(=])\/(?=(?:v2|preview|admin|carta|imprimir|api|wp-content)\/)/g, `${base}/`);
 const injectDemo = (html, script) => {
-  const before = `<script src="${base}/v2/${script}" defer></script>`;
+  const before = script==='admin.js'?`<script src="${base}/v2/${script}" type="module"></script>`:`<script src="${base}/v2/${script}" defer></script>`;
   return html.replace(before, `<meta name="boccantina-demo-base" content="${base}">\n  <script src="${base}/v2/seed.js" defer></script>\n  <script src="${base}/v2/demo-api.js" defer></script>\n  ${before}`);
 };
 await cp(resolve(repo, 'preview-src/v2'), resolve(output, 'v2'), { recursive:true });

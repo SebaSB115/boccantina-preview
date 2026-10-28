@@ -5,14 +5,12 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 import { PRINT_DESIGN_VERSION, printProjection, renderPrintBody } from '../preview-src/v2/print-layout.js';
+import {normalizePrintSelection} from '../preview-src/v2/shared-print/design.js';
 
 const repo = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const browserPath = () => [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/opt/google/chrome/chrome'].find((path) => path && existsSync(path));
-const printOptions = (proposal = 'actual', size = 'A4') => {
-  if (!['actual','sobria','editorial'].includes(proposal) || !['A4','A3','A2'].includes(size)) throw Object.assign(new Error('Propuesta o tamaño de papel no válido.'), {status:400});
-  return {proposal,size};
-};
-const fingerprint = (catalog, language, proposal = 'actual', size = 'A4') => createHash('sha256').update(JSON.stringify({ layout:PRINT_DESIGN_VERSION, language, ...printOptions(proposal,size), categories:printProjection(catalog) })).digest('hex');
+const printOptions = (proposal = 'actual', size = 'A4', design = null) => normalizePrintSelection(proposal,size,design,'boccantina');
+const fingerprint = (catalog, language, proposal = 'actual', size = 'A4', design = null) => createHash('sha256').update(JSON.stringify({ layout:PRINT_DESIGN_VERSION, language, ...printOptions(proposal,size,design), categories:printProjection(catalog) })).digest('hex');
 const rows = (projection) => new Map(projection.flatMap((group, index) => [[`category:${group.id}`, JSON.stringify({ es:group.es, en:group.en, index })], ...group.products.map((product, position) => [`product:${product.id}`, JSON.stringify({ ...product, category:group.id, position })])]));
 
 export class PrintMenuV2 {
@@ -25,9 +23,9 @@ export class PrintMenuV2 {
     return editions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
-  async status(catalog, language = 'es', proposal = 'actual', size = 'A4') {
+  async status(catalog, language = 'es', proposal = 'actual', size = 'A4', design = null) {
     if (!['es', 'en'].includes(language)) throw Object.assign(new Error('Idioma de impresión no válido.'), { status:400 });
-    printOptions(proposal,size);
+    printOptions(proposal,size,design);
     const list = await this.editions();
     const latest = list.find((edition) => edition.language === language && edition.proposal === proposal && edition.size === size);
     const before = rows(latest?.snapshot || []), after = rows(printProjection(catalog));
@@ -37,28 +35,29 @@ export class PrintMenuV2 {
       else if (before.get(key) !== value) changes.changed++;
     }
     for (const key of before.keys()) if (!after.has(key)) changes.removed++;
-    const currentFingerprint = fingerprint(catalog, language, proposal, size);
+    const currentFingerprint = fingerprint(catalog, language, proposal, size, design);
     return { revision:catalog.revision, current:latest?.fingerprint === currentFingerprint, changes,
-      editions:list.map(({ snapshot, ...edition }) => ({ ...edition, current:edition.fingerprint === currentFingerprint && edition.proposal === proposal && edition.size === size, legacy:!edition.proposal || !edition.size })) };
+      editions:list.map(({ snapshot, ...edition }) => ({ ...edition, current:edition.fingerprint === currentFingerprint && edition.proposal === proposal && edition.size === size, legacy:!(edition.proposal==='actual'||/^p-[0-9a-f-]{36}$/.test(edition.proposal||'')) || !edition.size })) };
   }
 
-  generate(catalog, revision, language, author, proposal = 'actual', size = 'A4') {
+  generate(catalog, revision, language, author, proposal = 'actual', size = 'A4', design = null) {
     const task = this.queue.then(async () => {
       if (!['es', 'en'].includes(language)) throw Object.assign(new Error('Idioma de impresión no válido.'), { status:400 });
-      printOptions(proposal,size);
+      const selection=printOptions(proposal,size,design);
       if (revision !== catalog.revision) throw Object.assign(new Error('La carta cambió. Actualiza el estado antes de generar.'), { status:409 });
       const copy = structuredClone(catalog);
-      const hash = fingerprint(copy, language, proposal, size);
+      const hash = fingerprint(copy, language, proposal, size, design);
       const existing = (await this.editions()).find((edition) => edition.language === language && edition.fingerprint === hash && edition.proposal === proposal && edition.size === size);
       if (existing) { const { snapshot, ...metadata } = existing; return metadata; }
       const chrome = browserPath();
       if (!chrome) throw Object.assign(new Error('Para generar el PDF instala Chrome o Chromium en este servidor y configura CHROME_EXECUTABLE_PATH.'), { status:503 });
-      const edition = { id:randomUUID(), createdAt:new Date().toISOString(), language, proposal, size, revision, author, fingerprint:hash, snapshot:printProjection(copy) };
+      const edition = { id:randomUUID(), createdAt:new Date().toISOString(), language, ...selection, revision, author, fingerprint:hash, snapshot:printProjection(copy) };
       let css = await readFile(join(repo, 'preview-src/v2/print.css'), 'utf8');
       for (const font of ['assets/fraunces-print.ttf', 'shared-print/vendor/NotoSans-Regular.ttf']) {
         css = css.replace(`./${font}`, `data:font/ttf;base64,${(await readFile(join(repo, 'preview-src/v2', font))).toString('base64')}`);
       }
-      const layoutModule = `data:text/javascript;base64,${Buffer.from(await readFile(join(repo, 'preview-src/v2/print-layout.js'))).toString('base64')}`;
+      const layoutSource=(await readFile(join(repo, 'preview-src/v2/print-layout.js'),'utf8')).replace("import {normalizePrintDesign} from './shared-print/design.js';",await readFile(join(repo,'preview-src/v2/shared-print/design.js'),'utf8'));
+      const layoutModule = `data:text/javascript;base64,${Buffer.from(layoutSource).toString('base64')}`;
       const logo = await readFile(join(repo, 'snapshot/boccantina.com/preview/assets/boccantina-logo-transparent.png'));
       const texture = await readFile(join(repo, 'preview-src/v2/assets/print-marble-black.png'));
       const body = renderPrintBody(copy, language, `data:image/png;base64,${logo.toString('base64')}`, edition, `data:image/png;base64,${texture.toString('base64')}`);

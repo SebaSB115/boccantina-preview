@@ -1,11 +1,34 @@
+import {loadPrintDrafts,savePrintDrafts,createPrintDraft,printDraftFields,readPrintDraft} from './shared-print/drafts.js';
+import {renderPrintBody,paginatePrint,fitPrintPreview} from './print-layout.js';
 const state = {
   catalog:null, users:[], session:null, view:'products', selectedProduct:null,
   selectedCategory:null, selectedUser:null, userFormOpen:false, mobileMode:'list', dirty:false,
   search:'', filter:'all', qr:null, printLanguage:'es', printProposal:'actual', printSize:'A4', printStatus:null, printBusy:false
 };
-const printChoices={actual:'Diseño actual',sobria:'Sobria',editorial:'Editorial'};
-const printStorage='boccantina-print-proposals-v2';
-let printAdded=(()=>{try{return JSON.parse(localStorage.getItem(printStorage)||'[]').filter(value=>['sobria','editorial'].includes(value));}catch{return [];}})();
+const printChoices=new Proxy({actual:'Diseño actual'},{get:(choices,id)=>choices[id]||escapeHtml(printName(id))});
+const printAdded=[];
+let printDrafts=loadPrintDrafts('boccantina');
+const selectedPrintDraft=()=>printDrafts.find(item=>item.id===state.printProposal);
+const printDesign=()=>selectedPrintDraft()?.design||null;
+const printName=id=>id==='actual'?'Diseño actual':printDrafts.find(item=>item.id===id)?.name||'Propuesta eliminada';
+const printQuery=()=>`lang=${state.printLanguage}&proposal=${encodeURIComponent(state.printProposal)}&size=${state.printSize}${printDesign()?`&design=${encodeURIComponent(JSON.stringify(printDesign()))}`:''}`;
+let stopPrintPreview,printPreviewRequest=0;
+async function renderPrintPreview(){
+  const host=content.querySelector('[data-print-live-preview]');if(!host||!state.catalog)return;
+  const request=++printPreviewRequest;
+  try{
+    if(!document.querySelector('[data-print-styles]')){
+      const link=document.createElement('link');link.rel='stylesheet';link.dataset.printStyles='true';link.href='/boccantina-preview/v2/print.css';document.head.append(link);
+      await new Promise((resolve,reject)=>{link.onload=resolve;link.onerror=reject;});
+    }
+    if(request!==printPreviewRequest||!host.isConnected)return;
+    stopPrintPreview?.();
+    host.innerHTML=renderPrintBody(state.catalog,state.printLanguage,new URL('../preview/assets/boccantina-logo-transparent.png',import.meta.url).href,{design:printDesign(),size:state.printSize});
+    const menu=host.querySelector('.print-menu');await paginatePrint(menu);
+    if(request!==printPreviewRequest||!host.isConnected)return;
+    stopPrintPreview=fitPrintPreview(menu);
+  }catch(error){if(host.isConnected)host.textContent=`No se pudo mostrar la vista previa: ${error.message}`;}
+}
 const content = document.getElementById('view-content');
 const feedback = document.getElementById('feedback');
 const sidebar = document.getElementById('admin-sidebar');
@@ -50,10 +73,10 @@ async function api(path, options = {}) {
     const service = await demoPrint();
     if (options.method === 'POST') {
       const data = JSON.parse(options.body);
-      return service.generate(data.revision, data.language, data.proposal, data.size);
+      return service.generate(data.revision, data.language, data.proposal, data.size,data.design);
     }
     const query=new URL(path,location.origin).searchParams;
-    return service.status(query.get('lang') || 'es',query.get('proposal') || 'actual',query.get('size') || 'A4');
+    return service.status(query.get('lang') || 'es',query.get('proposal') || 'actual',query.get('size') || 'A4',query.has('design')?JSON.parse(query.get('design')):null);
   }
   const headers = { ...(options.headers || {}) };
   if (options.body && !(options.body instanceof Blob)) headers['content-type'] = 'application/json';
@@ -190,7 +213,7 @@ function renderPrint() {
   heading('Menú para imprimir', 'Elige una propuesta y un tamaño antes de generar el PDF.');
   const demo = Boolean(document.querySelector('meta[name="boccantina-demo-base"]'));
   const status = state.printStatus;
-  const editions = (status?.editions || []).filter(edition=>!edition.legacy);
+  const editions = (status?.editions || []).filter(edition=>!edition.legacy&&(edition.proposal==='actual'||printDrafts.some(item=>item.id===edition.proposal)));
   const language = state.printLanguage;
   const missing=Object.keys(printChoices).filter(value=>value!=='actual'&&!printAdded.includes(value));
   const active=editions.find(edition=>edition.current);
@@ -200,13 +223,43 @@ function renderPrint() {
     <p class="print-state" role="status">${!status ? 'Consultando ediciones…' : status.current ? `${printChoices[state.printProposal]} · ${state.printSize} · ${language.toUpperCase()} actualizado.` : `Esta combinación todavía no tiene un PDF vigente. Cambios de contenido: ${status.changes.added} incorporaciones, ${status.changes.changed} cambios y ${status.changes.removed} retiradas.`}</p>
     ${active?`<a class="button button--primary print-download" data-edition="${escapeHtml(active.id)}" href="/boccantina-preview/api/v2/admin/print/${encodeURIComponent(active.id)}.pdf">Descargar ${printChoices[state.printProposal]} · ${state.printSize} · ${language.toUpperCase()}</a>`:''}
     ${demo ? '<p class=help>PDF e historial guardados solo en este navegador.</p>' : ''}<details class="print-archive"><summary>Archivo de PDF anteriores</summary><p class="help">Estos archivos pueden contener diseños o datos anteriores. Comparte la descarga de la propuesta seleccionada.</p><ul class="print-editions">${editions.length ? editions.map((edition) => `<li><div><strong>${edition.legacy?'Diseño anterior':printChoices[edition.proposal]||'Propuesta archivada'} · ${edition.size||'tamaño anterior'} · ${edition.language === 'es' ? 'Español' : 'English'}</strong><span>${escapeHtml(new Date(edition.createdAt).toLocaleString('es-CR'))} · ${escapeHtml(edition.author)}</span><small>${edition.current ? 'Selección vigente' : 'Archivo histórico; no compartir como menú actual'}</small></div><a class="button" data-edition="${escapeHtml(edition.id)}" href="/boccantina-preview/api/v2/admin/print/${encodeURIComponent(edition.id)}.pdf">Descargar archivo</a></li>`).join('') : '<li>Aún no hay archivos.</li>'}</ul></details></div>`;
+  const proposalSelect=content.querySelector('[data-print-proposal]');
+  for(const item of printDrafts)proposalSelect.add(new Option(item.name,item.id,item.id===state.printProposal,item.id===state.printProposal));
+  if(printDrafts.length<2)content.querySelector('.print-proposals').insertAdjacentHTML('beforeend','<button class="button" type="button" data-print-add>+ Nueva propuesta</button>');
+  content.querySelector('.print-proposals').insertAdjacentHTML('afterend',printDraftFields(selectedPrintDraft()));
+  content.querySelector('[data-preview-print]').href='/boccantina-preview/imprimir/?'+printQuery();
+  content.querySelector('.print-controls').insertAdjacentHTML('afterend','<section class="print-preview-panel" aria-label="Vista previa del menú"><h3>Vista previa de la composición</h3><div data-print-live-preview tabindex="0" aria-label="Páginas del menú impreso, desplazables"></div></section>');
+  if(selectedPrintDraft()){
+    const editor=content.querySelector('.print-editor'),preview=content.querySelector('.print-preview-panel');
+    const workspace=document.createElement('div');workspace.className='print-design-workspace';editor.before(workspace);workspace.append(editor,preview);
+  }
+  content.querySelector('.print-intro p').textContent='El diseño actual se conserva. Crea hasta dos propuestas propias y ajusta su composición. Los platos y precios vienen de la carta guardada.';
   if(demo)content.querySelectorAll('[data-edition]').forEach(link=>{
     const button=document.createElement('button');button.type='button';button.className=link.className;button.dataset.edition=link.dataset.edition;button.textContent=link.textContent;link.replaceWith(button);
   });
+  renderPrintPreview();
 }
-async function refreshPrint() {
-  state.printStatus = await api(`/api/v2/admin/print/status?lang=${state.printLanguage}&proposal=${state.printProposal}&size=${state.printSize}`);
-  if (state.view === 'print') renderPrint();
+let printRefreshRequest=0;
+async function refreshPrint(preserveEditor=false) {
+  const request=++printRefreshRequest;
+  const status=await api('/boccantina-preview/api/v2/admin/print/status?'+printQuery());
+  if(request!==printRefreshRequest)return;
+  state.printStatus=status;
+  if(state.view!=='print')return;
+  if(!preserveEditor){renderPrint();return;}
+  const stateLine=content.querySelector('.print-state'),button=content.querySelector('[data-generate-print]');
+  if(stateLine)stateLine.textContent=status.current?`${printName(state.printProposal)} · ${state.printSize} · ${state.printLanguage.toUpperCase()} actualizado.`:`Esta combinación todavía no tiene un PDF vigente. Cambios de contenido: ${status.changes.added} incorporaciones, ${status.changes.changed} cambios y ${status.changes.removed} retiradas.`;
+  if(button)button.disabled=Boolean(status.current);
+  content.querySelector('.print-download')?.remove();
+  const active=status.editions.find(edition=>edition.current);
+  if(active&&stateLine){
+    const demo=Boolean(document.querySelector('meta[name="boccantina-demo-base"]'));
+    const action=document.createElement(demo?'button':'a');
+    action.className='button button--primary print-download';action.dataset.edition=active.id;
+    action.textContent=`Descargar ${printName(state.printProposal)} · ${state.printSize} · ${state.printLanguage.toUpperCase()}`;
+    if(demo)action.type='button';else action.href=`/api/v2/admin/print/${encodeURIComponent(active.id)}.pdf`;
+    stateLine.insertAdjacentElement('afterend',action);
+  }
 }
 function render() {
   clearNotice();
@@ -307,10 +360,23 @@ document.addEventListener('keydown', (event) => {
   else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0].focus(); }
 });
 content.addEventListener('input', (event) => {
+  if(event.target.matches('[data-print-name],[data-print-design]'))return;
   if (event.target.matches('[data-search]')) { state.search = event.target.value; content.querySelector('[data-items]').innerHTML = productRows(); return; }
   if (event.target.closest('form')) markDirty();
 });
 content.addEventListener('change', (event) => {
+  if(event.target.matches('[data-print-name],[data-print-design]')){
+    const draft=selectedPrintDraft();if(!draft)return;
+    try{
+      const updated=readPrintDraft(content,draft,'boccantina',printDrafts);
+      printDrafts=printDrafts.map(item=>item.id===draft.id?updated:item);savePrintDrafts('boccantina',printDrafts);
+      content.querySelector('[data-print-proposal]').selectedOptions[0].textContent=updated.name;
+      content.querySelector('[data-preview-print]').href='/boccantina-preview/imprimir/?'+printQuery();
+      content.querySelector('.print-editor-message').textContent='Propuesta guardada en este navegador.';
+      renderPrintPreview();refreshPrint(true).catch(error=>notify(error.message,true));
+    }catch(error){content.querySelector('.print-editor-message').textContent=error.message;}
+    return;
+  }
   if (event.target.matches('[data-print-language]')) { state.printLanguage = event.target.value; refreshPrint().catch((error) => notify(error.message, true)); return; }
   if (event.target.matches('[data-print-proposal]')) { state.printProposal = event.target.value; state.printStatus=null; refreshPrint().catch((error) => notify(error.message, true)); return; }
   if (event.target.matches('[data-print-size]')) { state.printSize = event.target.value; state.printStatus=null; refreshPrint().catch((error) => notify(error.message, true)); return; }
@@ -341,21 +407,26 @@ content.addEventListener('submit', (event) => {
 content.addEventListener('click', (event) => {
   const target = event.target;
   if (target.closest('[data-print-add]')) {
-    const value=content.querySelector('[data-print-add-choice]')?.value;
-    if(value&&!printAdded.includes(value)&&printAdded.length<2){printAdded.push(value);localStorage.setItem(printStorage,JSON.stringify(printAdded));state.printProposal=value;state.printStatus=null;refreshPrint().catch(error=>notify(error.message,true));}return;
+    if(printDrafts.length<2){const value=createPrintDraft('boccantina',printDrafts.length+1);printDrafts.push(value);savePrintDrafts('boccantina',printDrafts);state.printProposal=value.id;state.printStatus=null;refreshPrint().catch(error=>notify(error.message,true));}return;
+  }
+  if(target.closest('[data-print-delete]')){
+    const selected=selectedPrintDraft();
+    if(selected&&confirm('¿Eliminar la propuesta «'+selected.name+'»? Sus PDF dejarán de aparecer en esta lista.')){
+      printDrafts=printDrafts.filter(item=>item.id!==selected.id);savePrintDrafts('boccantina',printDrafts);state.printProposal='actual';state.printStatus=null;refreshPrint().catch(error=>notify(error.message,true));
+    }return;
   }
   if (document.querySelector('meta[name="boccantina-demo-base"]')) {
     const action = target.closest('[data-preview-print],[data-browser-print],[data-edition]');
     if(action) {
       event.preventDefault();const popup=action.dataset.edition?null:window.open('','_blank');
-      demoPrint().then(service=>action.dataset.edition?service.download(action.dataset.edition):service.preview(state.printLanguage,popup,action.hasAttribute('data-browser-print'),state.printProposal,state.printSize))
+      demoPrint().then(service=>action.dataset.edition?service.download(action.dataset.edition):service.preview(state.printLanguage,popup,action.hasAttribute('data-browser-print'),state.printProposal,state.printSize,printDesign()))
         .catch(error=>{popup?.close();notify(error.message,true);});return;
     }
   }
   if (target.closest('[data-refresh-print]')) { refreshPrint().catch((error) => notify(error.message, true)); return; }
   if (target.closest('[data-generate-print]')) {
     state.printBusy = true; renderPrint();
-    api('/boccantina-preview/api/v2/admin/print/editions', { method:'POST', body:JSON.stringify({ revision:state.printStatus?.revision ?? state.catalog.revision, language:state.printLanguage, proposal:state.printProposal, size:state.printSize }) })
+    api('/boccantina-preview/api/v2/admin/print/editions', { method:'POST', body:JSON.stringify({ revision:state.printStatus?.revision ?? state.catalog.revision, language:state.printLanguage, proposal:state.printProposal, size:state.printSize,design:printDesign() }) })
       .then(() => refreshPrint()).then(() => notify('PDF actualizado. Descárgalo desde la propuesta seleccionada.'))
       .catch((error) => notify(error.message, true)).finally(() => { state.printBusy = false; if (state.view === 'print') renderPrint(); });
     return;

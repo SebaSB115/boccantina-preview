@@ -1,6 +1,7 @@
 import {PRINT_DESIGN_VERSION} from '../print-layout.js';
 import {createPrintDefinition} from '../print-definition.js';
 // Fuente compartida de impresión de las demos. No sustituye la API privada.
+import {normalizePrintSelection} from './design.js';
 const assets = new URL('./vendor/', import.meta.url);
 let loading;
 function loadScript(name) {
@@ -138,29 +139,25 @@ export function createPrintService({ brand, readCatalog, logo }) {
   let queue = Promise.resolve();
   const revision = catalog => catalog.version ?? catalog.revision;
   const all = async () => (await stored(brand, 'editions')).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  function options(proposal = 'actual', size = 'A4') {
-    if (!['actual', 'sobria', 'editorial'].includes(proposal) || !['A4', 'A3', 'A2'].includes(size)) throw new Error('Propuesta o tamaño de papel no válido.');
-    return {proposal, size};
-  }
-  const selected = (catalog, language, proposal, size) => ({...project(catalog, brand, language), ...options(proposal, size)});
-  async function status(language, proposal = 'actual', size = 'A4') {
-    const catalog = await readCatalog(), snapshot = selected(catalog, language, proposal, size), fingerprint = await digest(snapshot), list = await all();
+  const selected = (catalog, language, proposal, size, design) => ({...project(catalog, brand, language), ...normalizePrintSelection(proposal, size, design, brand)});
+  async function status(language, proposal = 'actual', size = 'A4', design = null) {
+    const catalog = await readCatalog(), snapshot = selected(catalog, language, proposal, size, design), fingerprint = await digest(snapshot), list = await all();
     const latest = list.find(e => e.language === language && e.proposal === proposal && e.size === size);
-    return { version:revision(catalog), revision:revision(catalog), current:list.some(e => e.fingerprint === fingerprint && e.proposal === proposal && e.size === size), changes:differences(latest?.snapshot, snapshot), editions:list.map(({snapshot:_, ...e}) => ({...e, current:e.fingerprint === fingerprint && e.proposal === proposal && e.size === size, legacy:!e.proposal || !e.size})) };
+    return { version:revision(catalog), revision:revision(catalog), current:list.some(e => e.fingerprint === fingerprint && e.proposal === proposal && e.size === size), changes:differences(latest?.snapshot, snapshot), editions:list.map(({snapshot:_, ...e}) => ({...e, current:e.fingerprint === fingerprint && e.proposal === proposal && e.size === size, legacy:!(e.proposal === 'actual' || /^p-[0-9a-f-]{36}$/.test(e.proposal || '')) || !e.size})) };
   }
   async function documentFor(language, catalog, edition) {
     const [pdf, image] = await Promise.all([renderer(), logoData(logo)]);
-    return pdf.createPdf(brand === 'boccantina' ? await createPrintDefinition(selected(catalog, language, edition.proposal, edition.size), edition, image, pdf) : definition(selected(catalog, language, edition.proposal, edition.size), edition, image));
+    return pdf.createPdf(brand === 'boccantina' ? await createPrintDefinition(selected(catalog, language, edition.proposal, edition.size, edition.design), edition, image, pdf) : definition(selected(catalog, language, edition.proposal, edition.size, edition.design), edition, image));
   }
-  function generate(version, language, proposal = 'actual', size = 'A4') {
+  function generate(version, language, proposal = 'actual', size = 'A4', design = null) {
     const task = queue.then(async () => {
       const catalog = await readCatalog();
       if (revision(catalog) !== version) throw new Error('La carta cambió. Actualiza el estado antes de generar.');
-      const snapshot = selected(catalog, language, proposal, size), fingerprint = await digest(snapshot), existing = (await all()).find(e => e.fingerprint === fingerprint && e.proposal === proposal && e.size === size);
+      const snapshot = selected(catalog, language, proposal, size, design), fingerprint = await digest(snapshot), existing = (await all()).find(e => e.fingerprint === fingerprint && e.proposal === proposal && e.size === size);
       if (existing) return existing;
-      const edition = {id:fingerprint, fingerprint, snapshot, language, proposal, size, version, revision:version, author:'Demostración · este navegador', createdAt:new Date().toISOString()};
+      const edition = {id:fingerprint, fingerprint, snapshot, language, proposal, size, design:snapshot.design || null, version, revision:version, author:'Demostración · este navegador', createdAt:new Date().toISOString()};
       const document = await documentFor(language, catalog, edition), blob = await document.getBlob();
-      if (await digest(selected(await readCatalog(), language, proposal, size)) !== fingerprint) throw new Error('La carta cambió durante la generación. Actualiza el estado y vuelve a intentar.');
+      if (await digest(selected(await readCatalog(), language, proposal, size, design)) !== fingerprint) throw new Error('La carta cambió durante la generación. Actualiza el estado y vuelve a intentar.');
       await save(brand, edition, blob);
       return edition;
     });
@@ -175,13 +172,13 @@ export function createPrintService({ brand, readCatalog, logo }) {
     document.body.append(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
-  async function preview(language, popup, print = false, proposal = 'actual', size = 'A4') {
+  async function preview(language, popup, print = false, proposal = 'actual', size = 'A4', design = null) {
     if (!popup) throw new Error('Permite abrir pestañas para ver e imprimir el menú. También puedes descargar el PDF.');
     try {
       popup.opener = null;
       popup.document.title = 'Preparando menú para imprimir';
       popup.document.body.textContent = 'Preparando la carta completa…';
-      const catalog = await readCatalog(), doc = await documentFor(language, catalog, {version:revision(catalog), createdAt:new Date().toISOString(), ...options(proposal, size)});
+      const catalog = await readCatalog(), doc = await documentFor(language, catalog, {version:revision(catalog), createdAt:new Date().toISOString(), ...normalizePrintSelection(proposal, size, design, brand)});
       if (print) await doc.print(popup); else await doc.open(popup);
     } catch (error) { popup.close(); throw error; }
   }

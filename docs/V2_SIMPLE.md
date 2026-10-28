@@ -11,7 +11,7 @@ Esta rama es un espacio de trabajo separado de la versión 1. La aplicación V2 
 - En el preview V2 se incluye **Cachapa** en Entradas como producto de prueba (₡5.000), con su fotografía propia. Los demás platos conservan sus datos e imágenes existentes hasta recibir fotos identificadas para cada producto.
 - Cuentas administrativas con un único rol de **Administrador**. Pueden crearse varias cuentas, desactivarlas y renovar su contraseña. No hay permisos por puesto.
 - QR de la carta de consulta con cartel Boccantina A6, vista previa centrada, descarga del diseño SVG e impresión/guardado en PDF. Se conserva la descarga del código QR suelto. El enlace local se calcula en el servidor y la demo estática utiliza su enlace público.
-- Menú físico A4 independiente de la carta digital: fondo de mármol oscuro, marco ornamental dorado, logotipo oficial transparente y categorías en dos columnas. Usa el catálogo guardado en español o inglés, pagina automáticamente sin cortar platos y conserva revisiones PDF. La vista HTML, el PDF local y el PDF de demostración comparten la composición; las ediciones anteriores siguen en el historial.
+- Menú físico A4, A3 o A2 independiente de la carta digital: fondo de mármol oscuro, marco ornamental dorado, logotipo oficial transparente y categorías en dos columnas. El diseño vigente se conserva y es la única propuesta inicial. El administrador puede crear hasta dos propuestas adicionales, ajustar su composición con vista previa inmediata, editarlas o eliminarlas con confirmación. Usa el catálogo guardado en español o inglés, pagina automáticamente sin cortar platos y conserva revisiones PDF.
 
 Los extras por plato no se usan en V2. Las rutas de pedidos, cocina, mesas y reservas del servidor anterior no se sirven desde V2. El código histórico sigue en el repositorio para conservar la versión 1 y sus comprobaciones; no forma parte de la navegación V2.
 
@@ -34,7 +34,7 @@ La fuente de esta vista está en `preview-src/v2/carta.js` y `preview-src/v2/car
 
 El acceso `demo-boccantina` / `vista2026` sirve **solo para explorar la interfaz**. No protege archivos ni autentica contra el servidor: GitHub Pages es estático. Los cambios de productos, categorías y cuentas quedan en el navegador de cada visitante; no se comparten ni actualizan la carta oficial. No introduzcas usuarios ni contraseñas reales en esta demostración. Los datos locales de `.preview-data-v2/` nunca se incluyen en `docs-v2/`.
 
-En la demo, **Menú para imprimir → Generar PDF actualizado → Descargar PDF** genera un archivo A4 real desde el catálogo guardado en el navegador. También permite **Vista previa A4** e **Imprimir**. El historial se conserva en IndexedDB al recargar y detecta cambios de contenido. No requiere el servidor de una laptop; tampoco comparte datos entre dispositivos. Descargar los archivos permite conservarlos fuera del navegador.
+En la demo, **Menú para imprimir → elegir propuesta y papel → Generar PDF actualizado → Descargar PDF** genera un archivo real desde el catálogo guardado en el navegador. **+ Nueva propuesta** abre el editor de columnas, márgenes, logotipo, tipografía, espaciado y marco; **Eliminar propuesta** la borra tras confirmación. Los borradores se guardan en este navegador y el historial PDF se conserva en IndexedDB al recargar. No requiere el servidor de una laptop; tampoco comparte datos entre dispositivos. Descargar los archivos permite conservarlos fuera del navegador.
 
 El motor gratuito y versionado se distribuye desde `isabellas-menu-preview-a/preview-a/shared-print`; consulta el README y `manifest.json` de `preview-src/v2/shared-print`. Las ediciones de esta demo son independientes de las del servidor Node.
 
@@ -59,7 +59,7 @@ El archivo de catálogo, las cuentas y las imágenes subidas se guardan en `.pre
 
 ## Menú físico y revisiones PDF
 
-Desde **Menú para imprimir**, selecciona español o inglés, revisa la vista A4 y pulsa **Generar PDF actualizado**. El PDF y su revisión se archivan en `.preview-data-v2/print-editions/`. Cuando cambian nombres, descripciones, categorías, orden o precios, la edición anterior se conserva y la Central muestra que hace falta generar otra. Los productos y categorías ocultos no se imprimen; la disponibilidad temporal no modifica una edición física. Los precios sin definir muestran «Consultar precio».
+Desde **Menú para imprimir**, selecciona propuesta, tamaño A4/A3/A2 e idioma, revisa la vista previa y pulsa **Generar PDF actualizado**. El PDF y su revisión se archivan en `.preview-data-v2/print-editions/`. Cuando cambian nombres, descripciones, categorías, orden, precios o composición, la edición anterior se conserva y la Central muestra que hace falta generar otra. Los productos y categorías ocultos no se imprimen; la disponibilidad temporal no modifica una edición física. Los precios sin definir muestran «Consultar precio».
 
 La generación PDF requiere Chrome, Chromium o Edge instalado en el servidor Node; si no se detecta automáticamente, configura `CHROME_EXECUTABLE_PATH`. Las ediciones anteriores permanecen disponibles aunque falle una generación. El archivo de revisiones debe incluirse en las copias de respaldo del directorio de datos.
 
