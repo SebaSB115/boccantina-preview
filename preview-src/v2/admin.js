@@ -132,10 +132,55 @@ function renderUsers() {
     <form class="user-form" id="user-form"><h2>${selected ? 'Editar administrador' : 'Nuevo administrador'}</h2><div class="form-grid"><label>Nombre visible *<input name="name" required maxlength="80" value="${escapeHtml(selected?.name || '')}"></label><label>Usuario *<input name="username" required minlength="3" maxlength="80" autocomplete="off" value="${escapeHtml(selected?.username || '')}"></label><label class="form-wide">Contraseña ${selected ? '(déjala vacía para conservarla)' : '*'}<input name="password" type="password" ${selected ? '' : 'required'} minlength="11" maxlength="256" autocomplete="new-password"></label></div>${selected ? `<div class="choice-row"><label><input type="checkbox" name="active" ${selected.active ? 'checked' : ''} ${selected.id === state.session.user.id ? 'disabled' : ''}> Cuenta activa</label></div>` : ''}<div class="editor-actions"><div class="editor-actions__main"><button type="submit" class="button button--primary">${selected ? 'Guardar cuenta' : 'Crear cuenta'}</button><button class="button" type="button" data-cancel-user>Cancelar</button></div></div></form>`
     : ''}`;
 }
+let qrDesign, qrArtwork;
+function qrDesigner() { return qrDesign ||= import('/v2/qr-design.js'); }
+async function loadQrArtwork(value, section) {
+  try {
+    const designer = await qrDesigner();
+    const artwork = qrArtwork?.url === value.url ? qrArtwork : await designer.createQrArtwork(value.url);
+    if (!section.isConnected) return;
+    const image = section.querySelector('[data-qr-artwork]');
+    image.src = artwork.image;
+    await image.decode();
+    if (!section.isConnected) return;
+    qrArtwork = artwork;
+    image.hidden = false;
+    section.querySelector('[data-qr-loading]').hidden = true;
+    section.querySelectorAll('[data-download-qr-design], [data-print-qr-design]').forEach((button) => { button.disabled = false; });
+    section.querySelector('.qr-stage').setAttribute('aria-busy', 'false');
+  } catch (error) {
+    if (!section.isConnected) return;
+    section.querySelector('.qr-stage').setAttribute('aria-busy', 'false');
+    section.querySelector('[data-qr-loading]').textContent = 'No se pudo cargar el cartel.';
+    section.querySelector('[data-retry-qr]').hidden = false;
+    notify(error.message, true);
+  }
+}
 function renderQr() {
   heading('QR del menú', 'Un acceso directo a la carta digital de consulta.');
   const value = state.qr;
-  content.innerHTML = value ? `<div class="qr-section"><div class="qr-frame"><img src="/api/v2/admin/qr.svg" alt="Código QR de la carta digital de Boccantina"></div><div class="qr-details"><h2>Escanea para consultar la carta</h2><a class="qr-link" href="${escapeHtml(value.url)}" target="_blank" rel="noopener">${escapeHtml(value.url)}</a>${value.local ? '<p class="warning">Este QR abre una dirección local de prueba. Antes de imprimirlo para clientes, configura la URL pública HTTPS de la carta.</p>' : ''}<div class="qr-actions"><button class="button button--primary" type="button" data-copy-qr>Copiar enlace</button><a class="button" href="/api/v2/admin/qr.svg?download=1">Descargar QR en SVG</a></div></div></div>` : '<p class="empty">Cargando QR…</p>';
+  content.innerHTML = value ? `<div class="qr-section">
+    <figure class="qr-preview">
+      <div class="qr-stage" aria-busy="true">
+        <p data-qr-loading role="status">Preparando cartel…</p>
+        <button class="button" type="button" data-retry-qr hidden>Reintentar</button>
+        <img class="qr-poster" data-qr-artwork width="420" height="592" hidden alt="Cartel de Boccantina. La carta. El siguiente buen momento. Escanea el código con tu cámara para consultar la carta en español e inglés, sin aplicaciones.">
+      </div>
+      <figcaption>Cartel A6 · 105 × 148 mm</figcaption>
+    </figure>
+    <div class="qr-actions" aria-label="Acciones del cartel QR">
+      <button class="button button--primary" type="button" data-download-qr-design disabled>Descargar diseño SVG</button>
+      <button class="button" type="button" data-print-qr-design disabled>Imprimir / guardar PDF</button>
+      <button class="button" type="button" data-copy-qr>Copiar enlace</button>
+    </div>
+    <div class="qr-details">
+      <span class="qr-destination-label">Destino del QR</span>
+      <a class="qr-link" href="${escapeHtml(value.url)}" target="_blank" rel="noopener">${escapeHtml(value.url)}</a>
+      ${value.local ? '<p class="warning">Este QR abre una dirección local de prueba. Antes de imprimirlo para clientes, configura la URL pública HTTPS de la carta.</p>' : ''}
+      <a class="qr-code-download" href="/api/v2/admin/qr.svg?download=1">Descargar solo el código QR en SVG</a>
+    </div>
+  </div>` : '<p class="empty">Cargando QR…</p>';
+  if (value) loadQrArtwork(value, content.querySelector('.qr-section'));
 }
 function renderPrint() {
   heading('Menú para imprimir', 'Una edición A4 propia de Boccantina, generada con la carta actual.');
@@ -335,6 +380,14 @@ content.addEventListener('click', (event) => {
     form.elements.image.value = '';
     form.querySelector('.image-preview').replaceWith(Object.assign(document.createElement('div'), { className:'image-preview image-placeholder', textContent:'Sin imagen propia.' }));
     target.remove(); markDirty(); return;
+  }
+  if (target.closest('[data-retry-qr]')) { clearNotice(); renderQr(); return; }
+  if (target.closest('[data-download-qr-design], [data-print-qr-design]')) {
+    if (!qrArtwork || qrArtwork.url !== state.qr?.url) return;
+    qrDesigner().then((designer) => target.closest('[data-download-qr-design]')
+      ? designer.downloadQrArtwork(qrArtwork) : designer.printQrArtwork(qrArtwork))
+      .catch((error) => notify(error.message, true));
+    return;
   }
   if (target.closest('[data-copy-qr]')) navigator.clipboard.writeText(state.qr.url)
     .then(() => notify('Enlace de la carta copiado.')).catch(() => notify('No se pudo copiar. Selecciona el enlace visible.', true));

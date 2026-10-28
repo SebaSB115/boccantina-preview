@@ -4,16 +4,19 @@ function initialLanguage() {
   return /^es(?:-|$)/i.test(navigator.language || '') ? 'es' : 'en';
 }
 const ALL_PRODUCTS = '__all__';
-const state = { catalog:null, language:initialLanguage(), category:null, query:'', gridOpen:true };
+const railPositions = new Map();
+let detailTrigger = null, detailScroll = 0;
+const state = { catalog:null, language:initialLanguage(), category:ALL_PRODUCTS, query:'' };
 const translations = {
   es: { menu:'Carta digital', heading:'La carta', consult:'Solo consulta', category:'Categoría', intro:'Explora platos, precios y disponibilidad.', categories:'Categorías', allProducts:'Todos los productos', pick:'Elegir categoría', change:'Cambiar categoría', search:'Buscar un plato o ingrediente', searchPlaceholder:'Buscar en toda la carta', clear:'Limpiar búsqueda', dishes:'platos', dish:'plato', featuredDish:'Plato', results:'Resultados de búsqueda', noResults:'No encontramos platos con ese nombre o ingrediente.', noCategory:'La carta está en preparación. Consulta al personal del restaurante.', count:'en esta categoría', details:'Ver detalles', close:'Cerrar detalles', unavailable:'No disponible actualmente', pricePending:'Precio por confirmar', reference:'Imagen ilustrativa de la categoría', ownPhoto:'Fotografía del plato', noDescription:'Consulta al personal por los detalles de este plato.' },
   en: { menu:'Digital menu', heading:'The menu', consult:'Browse only', category:'Category', intro:'Explore dishes, prices and availability.', categories:'Categories', allProducts:'All dishes', pick:'Choose a category', change:'Change category', search:'Search for a dish or ingredient', searchPlaceholder:'Search the whole menu', clear:'Clear search', dishes:'dishes', dish:'dish', featuredDish:'Dish', results:'Search results', noResults:'No dishes match that name or ingredient.', noCategory:'The menu is being prepared. Please ask our team.', count:'in this category', details:'View details', close:'Close details', unavailable:'Currently unavailable', pricePending:'Price to be confirmed', reference:'Illustrative category image', ownPhoto:'Dish photograph', noDescription:'Please ask our team for more details about this dish.' }
 };
+Object.assign(translations.es, { allShort:'Todos', previousCategories:'Categorías anteriores', nextCategories:'Más categorías', previousDishes:'Platos anteriores', nextDishes:'Más platos', carousel:'Carrusel de platos', illustrative:'Imagen ilustrativa', noPhoto:'Sin fotografía' });
+Object.assign(translations.en, { allShort:'All', previousCategories:'Previous categories', nextCategories:'More categories', previousDishes:'Previous dishes', nextDishes:'More dishes', carousel:'Dish carousel', illustrative:'Illustrative image', noPhoto:'No photograph' });
 const html = (value = '') => String(value).replace(/[&<>"']/g, (character) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[character]);
 const copy = () => translations[state.language];
 const localized = (item, esKey, enKey) => state.language === 'en' ? item[enKey] || item[esKey] || '' : item[esKey] || '';
 const categoryName = (item) => localized(item, 'es', 'en');
-const categoryDescription = (item) => localized(item, 'esDescription', 'enDescription');
 const productName = (item) => localized(item, 'nameEs', 'nameEn');
 const productDescription = (item) => localized(item, 'descEs', 'descEn');
 const price = (value) => value === null ? copy().pricePending : `₡${Number(value).toLocaleString('es-CR')}`;
@@ -39,23 +42,111 @@ function shell() {
       <div class="menu-navigation__title"><span class="eyebrow">${html(copy().consult)}</span><h1>${html(copy().heading)}</h1><p>${html(copy().intro)}</p></div>
       <label class="search-label" for="menu-search">${html(copy().search)}</label>
       <div class="search-control"><input id="menu-search" name="menu-search" type="search" autocomplete="off" placeholder="${html(copy().searchPlaceholder)}" value="${html(state.query)}"><button type="button" class="clear-search" data-clear-search aria-label="${html(copy().clear)}" ${state.query ? '' : 'hidden'}>×</button></div>
-      <nav class="category-links" aria-label="${html(copy().categories)}" data-category-links></nav>
     </aside>
+    <div class="category-carousel">
+      <nav id="menu-categories" class="category-links" aria-label="${html(copy().categories)}" data-category-links></nav>
+      <div class="category-controls" hidden><button type="button" data-category-step="-1" aria-controls="menu-categories" aria-label="${html(copy().previousCategories)}" disabled>‹</button><button type="button" data-category-step="1" aria-controls="menu-categories" aria-label="${html(copy().nextCategories)}">›</button></div>
+    </div>
     <section class="menu-content"><div id="menu-results"></div></section>
   </main>
   <dialog class="dish-dialog" aria-label="${html(copy().details)}"><div class="dish-dialog__content" data-dialog-content></div></dialog>`;
+  root.querySelector('.dish-dialog').addEventListener('close', () => {
+    document.documentElement.classList.remove('dish-open');
+    detailTrigger?.isConnected && detailTrigger.focus({ preventScroll:true });
+    window.scrollTo({ top:detailScroll, behavior:'instant' });
+  });
   renderNavigation(); renderResults();
 }
 
 function renderNavigation() {
   const categories = state.catalog.categories;
   const sidebar = root.querySelector('[data-category-links]');
-  sidebar.hidden = state.gridOpen || Boolean(state.query);
-  sidebar.innerHTML = `<button type="button" data-all-products aria-current="${state.category === ALL_PRODUCTS && !state.query}">${html(copy().allProducts)}</button>` + categories.map((item) => `<button type="button" data-category="${html(item.id)}" aria-current="${item.id === state.category && !state.query ? 'true' : 'false'}">${html(categoryName(item))}</button>`).join('');
+  const left = sidebar.scrollLeft;
+  const allVisual = '<span class="category-avatar category-avatar--all" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>';
+  sidebar.innerHTML = `<button type="button" data-all-products aria-label="${html(copy().allProducts)}" aria-current="${state.category === ALL_PRODUCTS && !state.query}">${allVisual}<span>${html(copy().allShort)}</span></button>` + categories.map((item) => {
+    const visual = categoryImage(item);
+    const avatar = `<span class="category-avatar${visual ? '' : ' is-missing'}" aria-hidden="true"><span class="category-avatar__fallback">${html(categoryName(item).slice(0, 1))}</span>${visual ? `<img src="${html(visual.path)}" alt="" width="60" height="60" loading="lazy" decoding="async" draggable="false">` : ''}</span>`;
+    return `<button type="button" data-category="${html(item.id)}" aria-label="${html(categoryName(item))}" title="${html(categoryName(item))}" aria-current="${item.id === state.category && !state.query}">${avatar}<span>${html(categoryName(item))}</span></button>`;
+  }).join('');
+  sidebar.scrollLeft = left;
+  updateCategoryControls();
 }
 
-function categoryGrid() {
-  return `<section class="category-index" aria-labelledby="category-index-title"><div class="category-index__heading"><span class="eyebrow">BOCCANTINA</span><h2 id="category-index-title" tabindex="-1">${html(copy().categories)}</h2></div><nav class="category-grid" aria-label="${html(copy().categories)}"><button type="button" class="category-tile category-tile--all" data-all-products ${state.category === ALL_PRODUCTS ? 'aria-current="true"' : ''}><span>${html(copy().allProducts)}</span><span class="category-tile__arrow" aria-hidden="true">↗</span></button>${state.catalog.categories.map((item, index) => `<button type="button" class="category-tile" data-category="${html(item.id)}" ${item.id === state.category ? 'aria-current="true"' : ''}><span class="category-tile__number" aria-hidden="true">${String(index + 1).padStart(2,'0')}</span><span>${html(categoryName(item))}</span><span class="category-tile__arrow" aria-hidden="true">↗</span></button>`).join('')}</nav></section>`;
+function updateCategoryControls() {
+  const nav = root.querySelector('[data-category-links]');
+  if (!nav) return;
+  const frame = nav.parentElement, controls = frame.querySelector('.category-controls');
+  const style = getComputedStyle(frame);
+  const available = frame.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  controls.hidden = nav.scrollWidth <= available + 2;
+  const end = nav.scrollWidth - nav.clientWidth;
+  controls.querySelector('[data-category-step="-1"]').disabled = nav.scrollLeft < 2;
+  controls.querySelector('[data-category-step="1"]').disabled = nav.scrollLeft >= end - 2;
+}
+
+function rememberRails() {
+  root.querySelectorAll('[data-dish-rail]').forEach((rail) => railPositions.set(rail.dataset.dishRail, rail.scrollLeft));
+}
+function updateRail(rail) {
+  const controls = rail.closest('.menu-shelf').querySelector('.shelf-controls');
+  const end = rail.scrollWidth - rail.clientWidth;
+  controls.hidden = end < 2;
+  rail.tabIndex = end < 2 ? -1 : 0;
+  controls.querySelector('[data-rail-step="-1"]').disabled = rail.scrollLeft < 2;
+  controls.querySelector('[data-rail-step="1"]').disabled = rail.scrollLeft >= end - 2;
+}
+function restoreRails() {
+  root.querySelectorAll('[data-dish-rail]').forEach((rail) => {
+    rail.scrollLeft = railPositions.get(rail.dataset.dishRail) || 0;
+    updateRail(rail);
+  });
+}
+function moveRail(rail, step) {
+  const first = rail.querySelector('li');
+  if (!first) return;
+  const gap = parseFloat(getComputedStyle(rail).columnGap) || 0;
+  rail.scrollBy({ left:step * (first.getBoundingClientRect().width + gap), behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+}
+function focusCategory(selected = root.querySelector('[data-category-links] [aria-current="true"]')) {
+  const nav = root.querySelector('[data-category-links]');
+  if (!selected) return;
+  selected.focus({ preventScroll:true });
+  const item = selected.getBoundingClientRect(), frame = nav.getBoundingClientRect();
+  if (item.left < frame.left + 8) nav.scrollLeft += item.left - frame.left - 8;
+  else if (item.right > frame.right - 8) nav.scrollLeft += item.right - frame.right + 8;
+}
+
+function dishCard(item) {
+  const own = realPhoto(item);
+  return `<li><article class="dish-card${item.soldOut ? ' dish-card--unavailable' : ''}">
+    <div class="dish-card__media${item.image ? '' : ' is-missing'}"><span class="dish-card__missing">${html(copy().noPhoto)}</span>${item.image ? `<img src="${html(item.image)}" alt="" width="400" height="300" loading="lazy" decoding="async" draggable="false">${own ? '' : `<span class="dish-card__image-note">${html(copy().illustrative)}</span>`}` : ''}</div>
+    <div class="dish-card__body"><h3><button class="dish-card__link" type="button" data-detail="${html(item.id)}" aria-haspopup="dialog" aria-label="${html(productName(item))} · ${html(copy().details)}">${html(productName(item))}</button></h3>
+      <p class="dish-card__description">${html(productDescription(item) || copy().noDescription)}</p>
+      ${item.soldOut ? `<span class="dish-card__status">${html(copy().unavailable)}</span>` : ''}
+      <strong class="dish-card__price">${html(price(item.price))}</strong><span class="dish-card__details" aria-hidden="true">${html(copy().details)} ↗</span>
+    </div>
+  </article></li>`;
+}
+
+function renderResults() {
+  const container = root.querySelector('#menu-results');
+  if (state.query) {
+    const items = itemsForView();
+    container.innerHTML = `<header class="mobile-results-heading"><h2 id="category-title" tabindex="-1">${html(copy().results)}</h2><p role="status">${items.length} ${html(copy().dishes)}</p></header><div class="dish-list">${items.length ? items.map((item) => dishRow(item, true)).join('') : `<p class="menu-empty">${html(copy().noResults)}</p>`}</div>`;
+    return;
+  }
+  const categories = state.catalog.categories.filter((category) => state.category === ALL_PRODUCTS || category.id === state.category);
+  container.innerHTML = categories.length ? categories.map((category) => {
+    const items = state.catalog.products.filter((item) => item.category === category.id);
+    const name = categoryName(category), titleId = `shelf-title-${category.id}`, railId = `shelf-${category.id}`;
+    return `<section class="menu-shelf" aria-labelledby="${html(titleId)}">
+      <header class="shelf-heading"><div><h2 id="${html(titleId)}">${html(name)}</h2><p>${items.length} ${html(items.length === 1 ? copy().dish : copy().dishes)}</p></div>
+        <div class="shelf-controls"><button type="button" data-rail-step="-1" aria-controls="${html(railId)}" aria-label="${html(copy().previousDishes)} · ${html(name)}" disabled>‹</button><button type="button" data-rail-step="1" aria-controls="${html(railId)}" aria-label="${html(copy().nextDishes)} · ${html(name)}">›</button></div>
+      </header>
+      <ul id="${html(railId)}" class="dish-carousel" data-dish-rail="${html(category.id)}" aria-label="${html(copy().carousel)} · ${html(name)}" tabindex="0">${items.map(dishCard).join('')}</ul>
+    </section>`;
+  }).join('') : `<p class="menu-empty">${html(copy().noCategory)}</p>`;
+  restoreRails();
 }
 
 function itemsForView() {
@@ -74,33 +165,18 @@ function dishRow(item, showCategory = false) {
   </article>`;
 }
 
-function renderResults() {
-  const container = root.querySelector('#menu-results');
-  if (state.gridOpen && !state.query) { container.innerHTML = state.catalog.categories.length ? categoryGrid() : `<p class="menu-empty">${html(copy().noCategory)}</p>`; return; }
-  const items = itemsForView();
-  const search = Boolean(state.query);
-  const all = state.category === ALL_PRODUCTS;
-  const category = all ? null : categoryById(state.category);
-  if (!category && !search && !all) { container.innerHTML = `<p class="menu-empty">${html(copy().noCategory)}</p>`; return; }
-  const visual = !search && category ? categoryImage(category) : null;
-  const title = search ? copy().results : all ? copy().allProducts : categoryName(category);
-  const subtitle = search ? `“${html(state.query)}”` : all ? '' : categoryDescription(category);
-  container.innerHTML = `${search ? '' : `<button type="button" class="category-return" data-open-categories>${html(copy().change)} <span aria-hidden="true">▦</span></button>`}<header class="category-feature${visual ? '' : ' category-feature--plain'}">
-      <div class="category-feature__copy"><span class="eyebrow">${html(search ? copy().results : all ? copy().menu : copy().category)}</span><h2 id="category-title" tabindex="-1">${html(title)}</h2>${subtitle ? `<p>${subtitle}</p>` : ''}<span class="category-feature__count" role="status" aria-live="polite">${items.length} ${html(items.length === 1 ? copy().dish : copy().dishes)}${search || all ? '' : ` ${html(copy().count)}`}</span></div>
-      ${visual ? `<figure class="category-feature__visual"><img src="${html(visual.path)}" alt="" width="600" height="420" decoding="async"><figcaption>${html(visual.caption)}</figcaption></figure>` : ''}
-    </header>
-    <div class="dish-list">${items.length ? items.map((item) => dishRow(item, all && !search)).join('') : `<p class="menu-empty">${html(search ? copy().noResults : copy().noCategory)}</p>`}</div>`;
-}
-
-function openDetail(id) {
+function openDetail(id, trigger) {
   const item = state.catalog.products.find((product) => product.id === id);
   if (!item) return;
+  detailTrigger = trigger;
+  detailScroll = window.scrollY;
   const dialog = root.querySelector('.dish-dialog');
   dialog.querySelector('[data-dialog-content]').innerHTML = `<div class="dish-dialog__header"><span class="eyebrow">BOCCANTINA · ${html(copy().menu)}</span><button type="button" class="dialog-close" data-dialog-close aria-label="${html(copy().close)}">×</button></div>
     ${realPhoto(item) ? `<figure class="dish-dialog__visual"><img src="${html(item.image)}" alt="${html(productName(item))}" width="640" height="430" decoding="async"><figcaption>${html(copy().ownPhoto)}</figcaption></figure>` : ''}
     <div class="dish-dialog__body"><h2>${html(productName(item))}</h2><strong>${html(price(item.price))}</strong><p>${html(productDescription(item) || copy().noDescription)}</p>${item.soldOut ? `<p class="dish-dialog__status">${html(copy().unavailable)}</p>` : ''}</div>`;
+  document.documentElement.classList.add('dish-open');
   dialog.showModal();
-  dialog.querySelector('[data-dialog-close]').focus();
+  dialog.querySelector('[data-dialog-close]').focus({ preventScroll:true });
 }
 
 root.addEventListener('click', (event) => {
@@ -108,28 +184,66 @@ root.addEventListener('click', (event) => {
   if (language) {
     if (state.language === language.dataset.language) return;
     const scroll = window.scrollY;
+    rememberRails();
+    const navigationScroll = root.querySelector('[data-category-links]').scrollLeft;
     state.language = language.dataset.language;
     try { localStorage.setItem('boccantina-v2-menu-language', state.language); } catch {}
     document.documentElement.lang = state.language;
     document.title = `${copy().menu} · Boccantina`;
-    shell(); root.querySelector(`[data-language="${state.language}"]`).focus({ preventScroll:true }); window.scrollTo(0, scroll); return;
+    shell(); root.querySelector('[data-category-links]').scrollLeft = navigationScroll; updateCategoryControls(); root.querySelector(`[data-language="${state.language}"]`).focus({ preventScroll:true }); window.scrollTo({ top:scroll, behavior:'instant' }); return;
+  }
+  const categoryStep = event.target.closest('[data-category-step]');
+  if (categoryStep) {
+    const nav = root.querySelector('[data-category-links]');
+    nav.scrollBy({ left:Number(categoryStep.dataset.categoryStep) * Math.max(92, nav.clientWidth - 92), behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    return;
   }
   const category = event.target.closest('[data-category]');
-  if (category) { state.category = category.dataset.category; state.query = ''; state.gridOpen = false; root.querySelector('#menu-search').value = ''; renderNavigation(); renderResults(); const title = root.querySelector('#category-title'); title?.focus({ preventScroll:true }); const top = root.querySelector('#menu-results').getBoundingClientRect().top; if (top < 12 || top > Math.min(240, innerHeight * .3)) window.scrollTo({ top:window.scrollY + top - 12, behavior:'instant' }); return; }
-  if (event.target.closest('[data-all-products]')) { state.category = ALL_PRODUCTS; state.query = ''; state.gridOpen = false; root.querySelector('#menu-search').value = ''; renderNavigation(); renderResults(); root.querySelector('#category-title')?.focus({ preventScroll:true }); return; }
-  if (event.target.closest('[data-open-categories]')) { state.gridOpen = true; renderNavigation(); renderResults(); root.querySelector('#category-index-title')?.focus({ preventScroll:true }); return; }
+  if (category || event.target.closest('[data-all-products]')) {
+    rememberRails(); state.category = category ? category.dataset.category : ALL_PRODUCTS;
+    state.query = ''; root.querySelector('#menu-search').value = ''; root.querySelector('[data-clear-search]').hidden = true;
+    renderNavigation(); renderResults();
+    focusCategory();
+    return;
+  }
+  const step = event.target.closest('[data-rail-step]');
+  if (step) { moveRail(step.closest('.menu-shelf').querySelector('[data-dish-rail]'), Number(step.dataset.railStep)); return; }
   const clear = event.target.closest('[data-clear-search]');
   if (clear) { state.query = ''; root.querySelector('#menu-search').value = ''; root.querySelector('[data-clear-search]').hidden = true; renderNavigation(); renderResults(); root.querySelector('#menu-search').focus(); return; }
   const detail = event.target.closest('[data-detail]');
-  if (detail) { openDetail(detail.dataset.detail); return; }
+  if (detail) { openDetail(detail.dataset.detail, detail); return; }
   if (event.target.closest('[data-dialog-close]')) root.querySelector('.dish-dialog').close();
 });
 root.addEventListener('input', (event) => {
   if (event.target.id !== 'menu-search') return;
+  rememberRails();
   state.query = event.target.value.trim();
   root.querySelector('[data-clear-search]').hidden = !state.query;
   renderNavigation(); renderResults();
 });
+root.addEventListener('scroll', (event) => {
+  if (event.target.matches?.('[data-category-links]')) updateCategoryControls();
+  if (event.target.matches?.('[data-dish-rail]')) {
+    railPositions.set(event.target.dataset.dishRail, event.target.scrollLeft);
+    updateRail(event.target);
+  }
+}, true);
+root.addEventListener('keydown', (event) => {
+  const category = event.target.closest('[data-category-links] button');
+  if (category && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
+    event.preventDefault();
+    const buttons = [...category.parentElement.querySelectorAll('button')], index = buttons.indexOf(category);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : index + (event.key === 'ArrowRight' ? 1 : -1);
+    focusCategory(buttons[Math.max(0, Math.min(buttons.length - 1, next))]);
+    return;
+  }
+  if (!event.target.matches('[data-dish-rail]') || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+  event.preventDefault(); moveRail(event.target, event.key === 'ArrowRight' ? 1 : -1);
+});
+root.addEventListener('error', (event) => {
+  const media = event.target.closest?.('.category-avatar, .dish-card__media');
+  if (media) { media.classList.add('is-missing'); event.target.hidden = true; }
+}, true);
 root.addEventListener('click', (event) => {
   const dialog = root.querySelector('.dish-dialog');
   if (event.target === dialog) dialog.close();
@@ -142,8 +256,7 @@ async function start() {
     const response = await fetch('/boccantina-preview/api/v2/catalog', { cache:'no-store' });
     if (!response.ok) throw new Error('No se pudo cargar la carta.');
     state.catalog = await response.json();
-    state.category = state.catalog.categories[0]?.id || null;
-    state.gridOpen = !matchMedia('(min-width: 900px)').matches;
+    state.category = ALL_PRODUCTS;
     shell();
   } catch (error) {
     root.innerHTML = `<main class="load-error" role="alert"><h1>La carta no está disponible</h1><p>${html(error.message)}</p><button type="button" data-retry>Reintentar</button></main>`;
@@ -151,9 +264,7 @@ async function start() {
   }
 }
 start();
-matchMedia('(min-width: 900px)').addEventListener('change', (event) => {
-  if (!event.matches || !state.catalog || !state.gridOpen) return;
-  state.gridOpen = false;
-  renderNavigation();
-  renderResults();
+window.addEventListener('resize', () => {
+  updateCategoryControls();
+  root.querySelectorAll('[data-dish-rail]').forEach(updateRail);
 });

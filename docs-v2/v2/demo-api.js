@@ -172,7 +172,7 @@
   window.fetch = function (input, init = {}) {
     const url = new URL(typeof input === 'string' ? input : input.url, location.href);
     const path = pathWithoutBase(url.pathname);
-    if (!path.startsWith('/api/v2/')) return originalFetch(input, init);
+    if (!path.startsWith('/api/v2/') || path === '/api/v2/admin/qr.svg') return originalFetch(input, init);
     return Promise.resolve().then(() => handle(input, init, path)).catch((error) => fail(400, error.message || 'No se pudo completar la acción.'));
   };
   // La vista A4 de la demo se abre en otra pestaña, donde sessionStorage no se comparte.

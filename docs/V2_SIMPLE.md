@@ -7,13 +7,26 @@ Esta rama es un espacio de trabajo separado de la versión 1. La aplicación V2 
 - Carta digital de **consulta**, con categorías, búsqueda, información de productos, precios, imágenes, disponibilidad e idiomas español e inglés.
 - Administración privada de categorías y productos: crear, editar, ordenar mediante posición, ocultar, marcar disponibilidad y eliminar con confirmación. Una categoría con productos debe vaciarse o reasignar sus productos antes de eliminarse.
 - Carga de imagen JPG, PNG o WebP por categoría o producto, hasta 3 MB. Cuando no hay imagen propia se utiliza la imagen existente del catálogo.
-- La carta distingue las fotografías heredadas, que son ilustrativas, de las fotos subidas para un plato. Las imágenes ilustrativas se usan solo como referencia de categoría; el filtro administrativo **Sin foto propia** ayuda a sustituirlas. La foto individual aparece junto al plato después de cargarla y guardar el producto.
+- La carta distingue las fotografías heredadas, que son ilustrativas, de las fotos subidas para un plato. En los carruseles móviles, las imágenes heredadas llevan la etiqueta **Imagen ilustrativa**; las fotografías propias se muestran sin ella. La ficha individual solo muestra una foto cuando el producto tiene fotografía propia. El filtro administrativo **Sin foto propia** ayuda a sustituir las referencias existentes.
 - En el preview V2 se incluye **Cachapa** en Entradas como producto de prueba (₡5.000), con su fotografía propia. Los demás platos conservan sus datos e imágenes existentes hasta recibir fotos identificadas para cada producto.
 - Cuentas administrativas con un único rol de **Administrador**. Pueden crearse varias cuentas, desactivarlas y renovar su contraseña. No hay permisos por puesto.
-- QR de la carta de consulta, descargable en SVG. El enlace se calcula en el servidor.
+- QR de la carta de consulta con cartel Boccantina A6, vista previa centrada, descarga del diseño SVG e impresión/guardado en PDF. Se conserva la descarga del código QR suelto. El enlace local se calcula en el servidor y la demo estática utiliza su enlace público.
 - Menú físico A4 independiente de la carta digital: portada Boccantina, índice y categorías con composición para papel. Usa el catálogo guardado en español o inglés y permite generar y conservar revisiones PDF desde la administración local.
 
 Los extras por plato no se usan en V2. Las rutas de pedidos, cocina, mesas y reservas del servidor anterior no se sirven desde V2. El código histórico sigue en el repositorio para conservar la versión 1 y sus comprobaciones; no forma parte de la navegación V2.
+
+## Diseño vigente · 27 de octubre de 2026
+
+El diseño de categorías circulares y carruseles queda adoptado como presentación predeterminada de Boccantina V2, hasta recibir nuevas indicaciones. Se sirve desde la ruta habitual `/carta/`, sin activar propuestas ni parámetros especiales.
+
+- La carta abre en **Todos** en móvil, tablet y escritorio. Cada categoría aparece como una sección vertical con su propio carrusel horizontal de platos.
+- La navegación circular permite filtrar una categoría o volver a Todos. Permanece accesible mientras se recorre la carta.
+- Deslizar horizontalmente recorre los platos; deslizar verticalmente recorre las categorías. También hay controles de avance y acceso por teclado, sin reproducción automática.
+- Se conservan búsqueda en toda la carta, español/inglés, disponibilidad, precios y fichas informativas. Al cerrar una ficha se recuperan el foco y la posición de lectura.
+- En escritorio se utiliza el mismo diseño aprobado: categorías circulares y carruseles que aprovechan el ancho disponible. Las categorías permanecen en una sola fila desplazable, con flechas cuando no caben; en móvil se recorren con el dedo. También admiten Tab, flechas del teclado e Inicio/Fin. Cambiar el tamaño de la ventana conserva la categoría y los productos actuales.
+- Las barras horizontales permanecen ocultas sin desactivar el desplazamiento, los controles de avance ni el teclado.
+
+La fuente de esta vista está en `preview-src/v2/carta.js` y `preview-src/v2/carta.css`. `build:pages:v2` genera la misma implementación en `docs-v2/`; no mantener otra copia manual ni volver a la cuadrícula móvil anterior. Generar estos archivos no publica el hosting: la publicación depende del flujo de despliegue indicado a continuación.
 
 ## Demostración pública de V2
 
