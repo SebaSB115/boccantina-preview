@@ -58,7 +58,7 @@ export class PrintMenuV2 {
       const body = renderPrintBody(copy, language, `data:image/png;base64,${logo.toString('base64')}`, edition, `data:image/png;base64,${texture.toString('base64')}`);
       let browser;
       try {
-        browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:process.env.CI ? ['--disable-gpu', '--no-sandbox'] : ['--disable-gpu'], timeout:30000 });
+        browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:process.env.CI ? ['--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage'] : ['--disable-gpu'], timeout:60000, dumpio:Boolean(process.env.CI) });
         const page = await browser.newPage();
         await page.setRequestInterception(true);
         page.on('request', (request) => /^(data:|about:)/.test(request.url()) ? request.continue() : request.abort());

@@ -14,6 +14,7 @@ const demoApi = await read('v2/demo-api.js');
 assert.match(selector, /href="https:\/\/sebasb115\.github\.io\/isabellas-menu-preview-a\/admin\/"/);
 assert.match(selector, /href="\.\.\/admin\/login\/"/);
 assert.match(selector, /Demostración pública/);
+assert.doesNotMatch(selector, /Ver diseño anterior/);
 assert.match(login, /ACCESO DE DEMOSTRACIÓN/);
 assert.match(login, /demo-boccantina/);
 assert.match(login, /id="login-form" method="post"/);

@@ -89,7 +89,6 @@ let selector = await readFile(resolve(selectorRoot, 'index.html'), 'utf8');
 selector = selector
   .replace('href="./isabella/"', 'href="https://sebasb115.github.io/isabellas-menu-preview-a/admin/"')
   .replace('href="./boccantina/"', 'href="../admin/login/"')
-  .replace('href="./anterior.html"', 'href="https://sebasb115.github.io/isabellas-menu-preview-a/central/anterior.html"')
   .replace('Entorno de demostración local. Los espacios de ambos restaurantes son independientes y no están conectados a producción.', 'Demostración pública. Cada restaurante mantiene sus datos de prueba en este navegador; no hay conexión con producción.');
 await write('central/index.html', selector);
 await copy(resolve(isabella, 'preview-a/admin-entry.css'), 'admin-entry.css');
