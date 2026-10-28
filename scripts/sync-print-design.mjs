@@ -1,0 +1,31 @@
+import {readFile, writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+const repo = resolve(import.meta.dirname, '..');
+const source = resolve(repo, '../isabellas-menu-preview-a/preview-a/shared-print/engine.js');
+const destination = resolve(repo, 'preview-src/v2/shared-print');
+const hash = value => createHash('sha256').update(value).digest('hex');
+const upstream = await readFile(source, 'utf8');
+let engine = upstream;
+function replace(from, to) {
+  if (engine.split(from).length !== 2) throw new Error('El motor compartido cambió. Revisa la adaptación antes de sincronizar.');
+  engine = engine.replace(from, to);
+}
+replace('return { layout:1, brand, language,', "return { layout:brand === 'boccantina' ? PRINT_DESIGN_VERSION : 1, brand, language,");
+replace('return pdf.createPdf(definition(project(catalog, brand, language), edition, image));',
+  "return pdf.createPdf(brand === 'boccantina' ? await createPrintDefinition(project(catalog, brand, language), edition, image, pdf) : definition(project(catalog, brand, language), edition, image));");
+engine = "import {PRINT_DESIGN_VERSION} from '../print-layout.js';\nimport {createPrintDefinition} from '../print-definition.js';\n" + engine;
+const manifest = JSON.parse(await readFile(resolve(destination, 'manifest.json'), 'utf8'));
+manifest.adaptation = {script:'scripts/sync-print-design.mjs',upstreamSha256:hash(upstream),design:'boccantina-gold-2'};
+manifest.files['engine.js'] = hash(engine);
+if (process.argv.includes('--check')) {
+  if (await readFile(resolve(destination, 'engine.js'), 'utf8') !== engine) throw new Error('Ejecuta node scripts/sync-print-design.mjs para actualizar el adaptador de impresión.');
+  for (const [file, checksum] of Object.entries(manifest.files)) {
+    if (hash(await readFile(resolve(destination, file))) !== checksum) throw new Error('Huella de impresión incorrecta: '+file);
+  }
+  console.log('Motor compartido y adaptación de Boccantina verificados.');
+} else {
+  await writeFile(resolve(destination, 'engine.js'), engine);
+  await writeFile(resolve(destination, 'manifest.json'), JSON.stringify(manifest, null, 2)+'\n');
+  console.log('Adaptación reproducible de impresión actualizada; fuente de Isabella intacta.');
+}

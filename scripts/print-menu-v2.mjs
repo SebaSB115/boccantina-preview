@@ -4,11 +4,11 @@ import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
-import { printProjection, renderPrintBody } from '../preview-src/v2/print-layout.js';
+import { PRINT_DESIGN_VERSION, printProjection, renderPrintBody } from '../preview-src/v2/print-layout.js';
 
 const repo = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const browserPath = () => [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/opt/google/chrome/chrome'].find((path) => path && existsSync(path));
-const fingerprint = (catalog, language) => createHash('sha256').update(JSON.stringify({ language, categories:printProjection(catalog) })).digest('hex');
+const fingerprint = (catalog, language) => createHash('sha256').update(JSON.stringify({ layout:PRINT_DESIGN_VERSION, language, categories:printProjection(catalog) })).digest('hex');
 const rows = (projection) => new Map(projection.flatMap((group, index) => [[`category:${group.id}`, JSON.stringify({ es:group.es, en:group.en, index })], ...group.products.map((product, position) => [`product:${product.id}`, JSON.stringify({ ...product, category:group.id, position })])]));
 
 export class PrintMenuV2 {
@@ -48,19 +48,24 @@ export class PrintMenuV2 {
       const chrome = browserPath();
       if (!chrome) throw Object.assign(new Error('Para generar el PDF instala Chrome o Chromium en este servidor y configura CHROME_EXECUTABLE_PATH.'), { status:503 });
       const edition = { id:randomUUID(), createdAt:new Date().toISOString(), language, revision, author, fingerprint:hash, snapshot:printProjection(copy) };
-      const css = await readFile(join(repo, 'preview-src/v2/print.css'), 'utf8');
+      let css = await readFile(join(repo, 'preview-src/v2/print.css'), 'utf8');
+      for (const font of ['assets/fraunces-print.ttf', 'shared-print/vendor/NotoSans-Regular.ttf']) {
+        css = css.replace(`./${font}`, `data:font/ttf;base64,${(await readFile(join(repo, 'preview-src/v2', font))).toString('base64')}`);
+      }
+      const layoutModule = `data:text/javascript;base64,${Buffer.from(await readFile(join(repo, 'preview-src/v2/print-layout.js'))).toString('base64')}`;
       const logo = await readFile(join(repo, 'snapshot/boccantina.com/preview/assets/boccantina-logo-transparent.png'));
-      const body = renderPrintBody(copy, language, `data:image/png;base64,${logo.toString('base64')}`, edition);
+      const texture = await readFile(join(repo, 'preview-src/v2/assets/print-marble-black.png'));
+      const body = renderPrintBody(copy, language, `data:image/png;base64,${logo.toString('base64')}`, edition, `data:image/png;base64,${texture.toString('base64')}`);
       let browser;
       try {
         browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:process.env.CI ? ['--disable-gpu', '--no-sandbox'] : ['--disable-gpu'], timeout:30000 });
         const page = await browser.newPage();
         await page.setRequestInterception(true);
         page.on('request', (request) => /^(data:|about:)/.test(request.url()) ? request.continue() : request.abort());
-        await page.setContent(`<!doctype html><html lang="${language}"><head><meta charset="utf-8"><style>${css}</style></head><body>${body}</body></html>`, { waitUntil:'load' });
+        await page.setContent(`<!doctype html><html lang="${language}"><head><meta charset="utf-8"><style>${css}</style></head><body class="print-document">${body}</body></html>`, { waitUntil:'load' });
         await page.emulateMediaType('print');
-        const pdf = await page.pdf({ format:'A4', preferCSSPageSize:true, printBackground:true, displayHeaderFooter:true,
-          headerTemplate:'<span></span>', footerTemplate:'<div style="width:100%;text-align:center;font:9px Arial;color:#6d6157">Boccantina · <span class="pageNumber"></span> / <span class="totalPages"></span></div>' });
+        await page.evaluate(async (module) => { const {paginatePrint} = await import(module); await paginatePrint(document.querySelector('.print-menu')); }, layoutModule);
+        const pdf = await page.pdf({ format:'A4', preferCSSPageSize:true, printBackground:true, displayHeaderFooter:false });
         await mkdir(this.archive, { recursive:true });
         await writeFile(join(this.archive, `${edition.id}.pdf`), pdf, { flag:'wx' });
         const pending = join(this.archive, `${edition.id}.tmp`);

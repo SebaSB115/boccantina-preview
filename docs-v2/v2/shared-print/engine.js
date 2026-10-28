@@ -1,3 +1,5 @@
+import {PRINT_DESIGN_VERSION} from '../print-layout.js';
+import {createPrintDefinition} from '../print-definition.js';
 // Fuente compartida de impresión de las demos. No sustituye la API privada.
 const assets = new URL('./vendor/', import.meta.url);
 let loading;
@@ -27,7 +29,7 @@ export function project(catalog, brand, language) {
   const groups = brand === 'isabella'
     ? catalog.categories.filter(c => c.visible !== false).map(c => ({ id:c.id, title:tx(c.title, language), items:c.items.filter(i => i.visible !== false).map(i => ({ id:i.id, name:tx(i.name, language), description:tx(i.description, language), price:i.price, options:(i.options || []).map(o => ({ label:tx(o.label, language), price:o.price })), addon:i.addon ? { label:tx(i.addon.label, language), price:i.addon.price } : null })) }))
     : ordered(catalog.categories.filter(c => c.visible !== false), 'es').map(c => ({ id:c.id, title:language === 'en' ? c.en || c.es : c.es, items:ordered(catalog.products.filter(i => i.visible !== false && i.category === c.id), 'nameEs').map(i => ({ id:i.id, name:language === 'en' ? i.nameEn || i.nameEs : i.nameEs, description:language === 'en' ? i.descEn || i.descEs : i.descEs, price:i.price, options:[], addon:null })) }));
-  return { layout:1, brand, language, groups:groups.filter(g => g.items.length), publicUrl:catalog.settings?.publicUrl || '' };
+  return { layout:brand === 'boccantina' ? PRINT_DESIGN_VERSION : 1, brand, language, groups:groups.filter(g => g.items.length), publicUrl:catalog.settings?.publicUrl || '' };
 }
 async function digest(value) {
   const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value)));
@@ -145,7 +147,7 @@ export function createPrintService({ brand, readCatalog, logo }) {
   }
   async function documentFor(language, catalog, edition) {
     const [pdf, image] = await Promise.all([renderer(), logoData(logo)]);
-    return pdf.createPdf(definition(project(catalog, brand, language), edition, image));
+    return pdf.createPdf(brand === 'boccantina' ? await createPrintDefinition(project(catalog, brand, language), edition, image, pdf) : definition(project(catalog, brand, language), edition, image));
   }
   function generate(version, language) {
     const task = queue.then(async () => {

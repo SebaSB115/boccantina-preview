@@ -1,4 +1,4 @@
-import { renderPrintBody } from './print-layout.js';
+import { renderPrintBody, paginatePrint, fitPrintPreview } from './print-layout.js';
 
 const root = document.getElementById('print-root');
 const message = document.getElementById('print-message');
@@ -19,6 +19,8 @@ try {
     catalog = await response.json();
   }
   root.innerHTML = renderPrintBody(catalog, language, `${base}/preview/assets/boccantina-logo-transparent.png`);
+  await paginatePrint(root.querySelector('.print-menu'));
+  fitPrintPreview(root.querySelector('.print-menu'));
   message.textContent = base ? 'Demostración pública: impresión de los datos guardados solo en este navegador.' : 'Vista previa A4. Para archivar un PDF, utiliza la administración.';
   button.disabled = false;
   document.documentElement.dataset.ready = 'true';

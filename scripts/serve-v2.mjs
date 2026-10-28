@@ -17,7 +17,7 @@ const data = await new V2Data(dataDirectory).init();
 const printMenu = new PrintMenuV2(dataDirectory);
 const sessions = new Map();
 const failures = new Map();
-const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.woff':'font/woff2', '.woff2':'font/woff2' };
+const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.woff':'font/woff2', '.woff2':'font/woff2', '.ttf':'font/ttf' };
 const htmlCsp = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
 const resourcePaths = new Map([
   ['/preview/admin-entry.css', join(publicRoot, 'preview/admin-entry.css')],

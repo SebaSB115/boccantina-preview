@@ -11,7 +11,7 @@ Esta rama es un espacio de trabajo separado de la versión 1. La aplicación V2 
 - En el preview V2 se incluye **Cachapa** en Entradas como producto de prueba (₡5.000), con su fotografía propia. Los demás platos conservan sus datos e imágenes existentes hasta recibir fotos identificadas para cada producto.
 - Cuentas administrativas con un único rol de **Administrador**. Pueden crearse varias cuentas, desactivarlas y renovar su contraseña. No hay permisos por puesto.
 - QR de la carta de consulta con cartel Boccantina A6, vista previa centrada, descarga del diseño SVG e impresión/guardado en PDF. Se conserva la descarga del código QR suelto. El enlace local se calcula en el servidor y la demo estática utiliza su enlace público.
-- Menú físico A4 independiente de la carta digital: portada Boccantina, índice y categorías con composición para papel. Usa el catálogo guardado en español o inglés y permite generar y conservar revisiones PDF desde la administración local.
+- Menú físico A4 independiente de la carta digital: fondo de mármol oscuro, marco ornamental dorado, logotipo oficial transparente y categorías en dos columnas. Usa el catálogo guardado en español o inglés, pagina automáticamente sin cortar platos y conserva revisiones PDF. La vista HTML, el PDF local y el PDF de demostración comparten la composición; las ediciones anteriores siguen en el historial.
 
 Los extras por plato no se usan en V2. Las rutas de pedidos, cocina, mesas y reservas del servidor anterior no se sirven desde V2. El código histórico sigue en el repositorio para conservar la versión 1 y sus comprobaciones; no forma parte de la navegación V2.
 

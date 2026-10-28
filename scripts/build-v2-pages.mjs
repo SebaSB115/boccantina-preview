@@ -3,6 +3,7 @@ import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import QRCode from 'qrcode';
 import { defaultCatalog } from './v2-data.mjs';
+import './sync-print-design.mjs';
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const workspace = resolve(repo, '..', '..');

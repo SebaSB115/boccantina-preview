@@ -113,6 +113,14 @@ try {
     const result = await page.evaluate(() => ({ width:document.documentElement.scrollWidth, viewport:innerWidth, products:document.querySelectorAll('.print-product').length, price:/₡5\s?100/.test(document.body.textContent) }));
     assert(result.width <= width + 1, `Desbordamiento en la vista de impresión ${width}px: ${JSON.stringify(result)}`);
     assert(result.products > 40 && result.price, JSON.stringify(result));
+    const paper = await page.evaluate(() => ({
+      pages:document.querySelectorAll('.print-sheet').length,
+      unique:new Set([...document.querySelectorAll('.print-product')].map(p => p.dataset.productId)).size,
+      overflow:[...document.querySelectorAll('.print-column')].some(c => c.scrollHeight > c.clientHeight + 1),
+      logos:[...document.querySelectorAll('.print-masthead img')].every(i => i.complete && i.naturalWidth > 0),
+      textures:[...document.querySelectorAll('.paper-texture')].every(i => i.complete && i.naturalWidth > 0)
+    }));
+    assert(paper.pages >= 2 && paper.unique === result.products && !paper.overflow && paper.logos && paper.textures, JSON.stringify(paper));
     if ([1440, 390].includes(width)) await page.screenshot({ path:join(directory, `print-${width}.png`), fullPage:true });
     if (width === 390) await page.screenshot({ path:join(directory, 'print-390-viewport.png') });
     await page.close();
