@@ -89,6 +89,15 @@ try {
   assert.equal(english.response.status, 201, `${english.json?.error || 'Error de PDF'}\n${stderr}`);
   assert.equal((await call('/api/v2/admin/print/status?lang=en')).json.current, true);
   assert.equal((await call(`/api/v2/admin/print/${english.json.id}.pdf`)).body.subarray(0, 4).toString(), '%PDF');
+  for(const [proposal,size,expected] of [['sobria','A3',841.89],['editorial','A2',1190.55]]){
+    const variant=await call('/api/v2/admin/print/editions','POST',{revision:changed.json.catalog.revision,language:'es',proposal,size});
+    assert.equal(variant.response.status,201,variant.json?.error);
+    const variantPdf=await call(`/api/v2/admin/print/${variant.json.id}.pdf`);
+    const media=variantPdf.body.toString('latin1').match(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)/);
+    assert(media && [Number(media[1]),Number(media[2])].some(value=>Math.abs(value-expected)<4),`${proposal} ${size}: tamaño PDF incorrecto ${(variantPdf.body.toString('latin1').match(/\/MediaBox\s*\[[^\]]+/g)||[]).slice(0,5).join(' | ')}`);
+    assert((variantPdf.body.toString('latin1').match(/\/Type\s*\/Page\b/g)||[]).length<=10,`${proposal} ${size}: paginación inesperada`);
+    assert.equal((await call(`/api/v2/admin/print/status?lang=es&proposal=${proposal}&size=${size}`)).json.current,true);
+  }
   const chrome = [process.env.CHROME_EXECUTABLE_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/opt/google/chrome/chrome'].find((path) => path && existsSync(path));
   browser = await puppeteer.launch({ executablePath:chrome, headless:true, args:process.env.CI ? ['--disable-gpu', '--no-sandbox'] : ['--disable-gpu'] });
   for (const width of [1440, 768, 390, 320]) {
@@ -100,9 +109,9 @@ try {
     await page.click('#sidebar-toggle');
     await page.click('[data-view="print"]');
     await page.waitForSelector('.print-workspace');
-    await page.waitForFunction(() => document.querySelectorAll('.print-editions a[href$=".pdf"]').length === 3);
+    await page.waitForFunction(() => document.querySelectorAll('.print-editions a[href$=".pdf"]').length === 5);
     const adminResult = await page.evaluate(() => ({ width:document.documentElement.scrollWidth, viewport:innerWidth, preview:document.querySelector('.print-controls a')?.href, archived:document.querySelectorAll('.print-editions li').length }));
-    assert(adminResult.width <= width + 1 && adminResult.preview?.includes('/imprimir/') && adminResult.archived === 3, JSON.stringify(adminResult));
+    assert(adminResult.width <= width + 1 && adminResult.preview?.includes('/imprimir/') && adminResult.archived === 5, JSON.stringify(adminResult));
     if ([1440, 390].includes(width)) await page.screenshot({ path:join(directory, `print-admin-${width}.png`) });
     await page.click('#theme-button');
     assert.equal(await page.evaluate(() => document.body.dataset.theme), 'gold');

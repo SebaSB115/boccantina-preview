@@ -161,3 +161,9 @@ body[data-theme=gold] .qr-actions .button--primary{background:var(--accent);bord
 @media(max-width:650px){.app-header{gap:8px;padding:10px 16px}.header-start{flex:1 1 150px}.brand img{width:138px}.header-actions{display:flex;flex:0 1 auto}.environment{display:none}.main{padding-top:24px}}
 @media(max-width:370px){.header-start{flex-basis:138px;gap:8px}.brand img{width:108px}.header-actions{margin-left:auto}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.print-proposals{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:0 0 12px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.print-proposals label{display:grid;gap:6px;min-width:180px;font-size:.85rem;font-weight:650}
+.print-proposals select{min-height:44px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--input);color:var(--text)}
+.print-download{display:inline-flex;margin:12px 0 24px}
+.print-archive{margin-top:24px;border-top:1px solid var(--border);padding-top:16px}.print-archive summary{cursor:pointer;font-weight:650;min-height:44px}.print-archive summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media(max-width:560px){.print-proposals>*{width:100%}.print-proposals label{min-width:0}.print-download{width:100%}}

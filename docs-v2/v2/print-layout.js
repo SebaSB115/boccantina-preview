@@ -12,7 +12,9 @@ export function printProjection(catalog) {
   })).filter(category => category.products.length);
 }
 
-export function paperArtwork() {
+export function paperArtwork(proposal = 'actual') {
+  if (proposal === 'sobria') return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123"><rect width="794" height="1123" fill="#151515"/><path d="M31 31H763M31 1092H763" stroke="#b99b5d" stroke-width="2"/></svg>';
+  if (proposal === 'editorial') return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 1123"><rect width="794" height="1123" fill="#211c1b"/><path d="M26 26H768M26 1097H768" stroke="#b99b5d" stroke-width="2"/><path d="M397 225V1040" stroke="#7e6743" stroke-width="1"/></svg>';
   const corner = `<g fill="none" stroke="#b99b5d" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round">
     <path d="M2 76V2H76M7 68V7H68M2 44C15 44 26 35 26 22S13 8 13 18C13 27 34 27 43 15S61 10 56 20C52 29 41 24 47 18M7 55C17 53 25 45 28 35M35 28C45 25 53 17 55 7"/>
     <path d="M18 39C4 37 10 25 16 28S20 36 18 39ZM39 18C37 4 25 10 28 16S36 20 39 18ZM32 29C27 20 35 15 38 22S35 28 32 29ZM29 32C20 27 15 35 22 38S28 35 29 32Z"/>
@@ -40,10 +42,11 @@ export function renderPrintBody(catalog, language = 'es', logo = new URL('../pre
   if (!['es', 'en'].includes(language)) throw new Error('Idioma de impresión no válido.');
   const en = language === 'en', groups = printProjection(catalog);
   const date = edition.createdAt ? new Date(edition.createdAt).toLocaleDateString(en ? 'en-US' : 'es-CR') : (en ? 'Preview' : 'Vista previa');
-  return `<main class="print-menu" data-language="${language}" aria-label="${en ? 'Printed menu' : 'Menú para imprimir'}">
+  const proposal=['actual','sobria','editorial'].includes(edition.proposal)?edition.proposal:'actual';
+  return `<main class="print-menu" data-language="${language}" data-proposal="${proposal}" aria-label="${en ? 'Printed menu' : 'Menú para imprimir'}">
     <template data-print-source>${groups.map(group => `<section data-group="${escapeHtml(group.id)}"><h2>${escapeHtml(en ? group.en || group.es : group.es)}</h2>${group.products.map(item => productMarkup(item, en)).join('')}</section>`).join('')}</template>
     <template data-print-paper><div class="print-page"><section class="print-sheet">
-      <div class="paper-art"><img src="${escapeHtml(texture)}" alt="" class="paper-texture">${paperArtwork()}</div>
+      <div class="paper-art">${proposal==='actual'?`<img src="${escapeHtml(texture)}" alt="" class="paper-texture">`:''}${paperArtwork(proposal)}</div>
       <header class="print-masthead"><img src="${escapeHtml(logo)}" alt="Boccantina · Cantina de vinos" width="401" height="98"><h1>${en ? 'MENU' : 'MENÚ'}</h1></header>
       <div class="print-columns"><div class="print-column"></div><div class="print-column"></div></div>
       <footer class="print-footer"><span>${en ? 'Prices in Costa Rican colones' : 'Precios en colones costarricenses'}</span><span data-page-number></span></footer>

@@ -2,7 +2,7 @@
   "source": "isabellas-menu-preview-a/preview-a/shared-print",
   "pdfmake": "0.3.11",
   "files": {
-    "engine.js": "d14c371f9a6ff05f0ebfc57fe6b516edc938253d8310275030364db91397873f",
+    "engine.js": "f079fb9be8421c8537efb41234ac057c8f8c3cb1f4f7f38ff7e2a500a524c1e3",
     "vendor/pdfmake.min.js": "faaee53f8dcf48b0934553665809d8180e20e435b654f633df2f18f9dbdeaa88",
     "vendor/vfs_fonts.js": "1483ed267fe00ad90a3834441b019d856dd41ed079b2614404b2fcef425db6fc",
     "vendor/Times.js": "f5f5dcce6abde4f33705bc6d3dbb5a688ef51cd6a45a6d54fe7228a2d4284759",
@@ -13,7 +13,7 @@
   },
   "adaptation": {
     "script": "scripts/sync-print-design.mjs",
-    "upstreamSha256": "2fac08fcc9d82179a942beda4c9de0903b32d0c350034b454ec4b16995323196",
+    "upstreamSha256": "7da56a5cea76b43ddb18a6eb225bab4a6f75c19efdd3ee2c9e98750591225241",
     "design": "boccantina-gold-2"
   }
 }

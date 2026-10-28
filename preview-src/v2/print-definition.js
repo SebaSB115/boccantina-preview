@@ -12,6 +12,12 @@ function loadStyles() {
 }
 const pt = pixels => pixels * 72 / 96;
 const hexColor = value => '#' + (value.match(/\d+/g) || []).slice(0, 3).map(n => Number(n).toString(16).padStart(2, '0')).join('');
+const paperScale = size => ({A4:1,A3:Math.SQRT2,A2:2})[size] || 1;
+function scaleNode(value, factor, key = '') {
+  if (Array.isArray(value)) return value.map(item => scaleNode(item, factor, key));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([name,item]) => [name,scaleNode(item,factor,name)]));
+  return typeof value === 'number' && ['fontSize','width','height','fit','x','y','x1','x2','y1','y2','lineWidth','characterSpacing','padding','margin'].includes(key) ? value * factor : value;
+}
 
 // Extract actual browser line breaks at A4, then retain vector text in the PDF.
 // Local Chromium and the hosted browser therefore paginate the same content.
@@ -62,7 +68,7 @@ export async function createPrintDefinition(snapshot, edition, logo, pdf) {
     })))
   };
   const container = document.createElement('div');
-  container.innerHTML = renderPrintBody(catalog, snapshot.language, logo, edition, texture);
+  container.innerHTML = renderPrintBody(catalog, snapshot.language, logo, {...edition,proposal:snapshot.proposal}, texture);
   const menu = container.firstElementChild;
   menu.classList.add('print-measure'); document.body.append(menu);
   try {
@@ -79,16 +85,15 @@ export async function createPrintDefinition(snapshot, edition, logo, pdf) {
         content.push({canvas:[{type:'line',x1:pt(rect.left-sheet.left),x2:pt(rect.right-sheet.left),y1:pt(rect.bottom-sheet.top),y2:pt(rect.bottom-sheet.top),lineWidth:0.56,lineColor:'#74603a'}],absolutePosition:{x:0,y:0}});
       }
     });
+    const factor=paperScale(snapshot.size),proposal=snapshot.proposal || 'actual';
+    const background={stack:[...(proposal==='actual'?[{image:'marble',width:595.28,height:841.89,absolutePosition:{x:0,y:0}}]:[]),{svg:paperArtwork(proposal),width:595.28,height:841.89,absolutePosition:{x:0,y:0}}]};
     return {
       info:{title:'Boccantina · '+(snapshot.language === 'en' ? 'Printed menu' : 'Menú impreso'),author:'Boccantina'},
-      pageSize:'A4',pageMargins:0,
+      pageSize:snapshot.size || 'A4',pageMargins:0,
       images:{marble:texture},
-      background:()=>({stack:[
-        {image:'marble',width:595.28,height:841.89,absolutePosition:{x:0,y:0}},
-        {svg:paperArtwork(),width:595.28,height:841.89,absolutePosition:{x:0,y:0}}
-      ]}),
-      defaultStyle:{font:'NotoSans',fontSize:8.8,color:'#eee6d6'},
-      content
+      background:()=>scaleNode(background,factor),
+      defaultStyle:{font:'NotoSans',fontSize:8.8*factor,color:'#eee6d6'},
+      content:scaleNode(content,factor)
     };
   } finally { menu.remove(); }
 }

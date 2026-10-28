@@ -12,8 +12,8 @@ function replace(from, to) {
   engine = engine.replace(from, to);
 }
 replace('return { layout:1, brand, language,', "return { layout:brand === 'boccantina' ? PRINT_DESIGN_VERSION : 1, brand, language,");
-replace('return pdf.createPdf(definition(project(catalog, brand, language), edition, image));',
-  "return pdf.createPdf(brand === 'boccantina' ? await createPrintDefinition(project(catalog, brand, language), edition, image, pdf) : definition(project(catalog, brand, language), edition, image));");
+replace('return pdf.createPdf(definition(selected(catalog, language, edition.proposal, edition.size), edition, image));',
+  "return pdf.createPdf(brand === 'boccantina' ? await createPrintDefinition(selected(catalog, language, edition.proposal, edition.size), edition, image, pdf) : definition(selected(catalog, language, edition.proposal, edition.size), edition, image));");
 engine = "import {PRINT_DESIGN_VERSION} from '../print-layout.js';\nimport {createPrintDefinition} from '../print-definition.js';\n" + engine;
 const manifest = JSON.parse(await readFile(resolve(destination, 'manifest.json'), 'utf8'));
 manifest.adaptation = {script:'scripts/sync-print-design.mjs',upstreamSha256:hash(upstream),design:'boccantina-gold-2'};

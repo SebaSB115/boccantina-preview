@@ -37,10 +37,10 @@ try {
   await page.waitForSelector('.print-workspace');
   await page.waitForFunction(() => !document.querySelector('[data-generate-print]').disabled);
   const admin = await page.evaluate(() => ({ message:document.querySelector('.print-state')?.textContent, generate:document.querySelector('[data-generate-print]')?.disabled, width:document.documentElement.scrollWidth }));
-  assert(admin.message.includes('Pendiente de generar') && !admin.generate && admin.width <= 391, JSON.stringify(admin));
+  assert(admin.message.includes('todavía no tiene un PDF vigente') && !admin.generate && admin.width <= 391, JSON.stringify(admin));
   await page.click('[data-generate-print]');
   await page.waitForSelector('[data-edition]', {timeout:60000});
-  assert(await page.$eval('.print-state', element => element.textContent.includes('coincide')));
+  assert(await page.$eval('.print-state', element => element.textContent.includes('actualizado')));
   await page.evaluate(() => {
     const key = 'boccantina-v2-public-demo-catalog';
     const catalog = JSON.parse(localStorage.getItem(key) || JSON.stringify(window.BoccV2DemoSeed));

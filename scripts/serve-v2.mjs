@@ -233,10 +233,10 @@ async function handler(request, response) {
       return send(response, 200, { ok:true }, 'application/json; charset=utf-8', { 'set-cookie':cookie('', 0) });
     }
     if (path === '/api/v2/admin/catalog' && request.method === 'GET') return send(response, 200, data.value.catalog);
-    if (path === '/api/v2/admin/print/status' && request.method === 'GET') return send(response, 200, await printMenu.status(data.value.catalog, url.searchParams.get('lang') || 'es'));
+    if (path === '/api/v2/admin/print/status' && request.method === 'GET') return send(response, 200, await printMenu.status(data.value.catalog, url.searchParams.get('lang') || 'es', url.searchParams.get('proposal') || 'actual', url.searchParams.get('size') || 'A4'));
     if (path === '/api/v2/admin/print/editions' && request.method === 'POST') {
       const input = await jsonBody(request);
-      return send(response, 201, await printMenu.generate(data.value.catalog, input.revision, input.language, session.user.name));
+      return send(response, 201, await printMenu.generate(data.value.catalog, input.revision, input.language, session.user.name, input.proposal, input.size));
     }
     const printPdf = /^\/api\/v2\/admin\/print\/([a-f0-9-]{36})\.pdf$/.exec(path);
     if (printPdf && request.method === 'GET') {

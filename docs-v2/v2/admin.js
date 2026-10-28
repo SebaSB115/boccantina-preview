@@ -1,8 +1,11 @@
 const state = {
   catalog:null, users:[], session:null, view:'products', selectedProduct:null,
   selectedCategory:null, selectedUser:null, userFormOpen:false, mobileMode:'list', dirty:false,
-  search:'', filter:'all', qr:null, printLanguage:'es', printStatus:null, printBusy:false
+  search:'', filter:'all', qr:null, printLanguage:'es', printProposal:'actual', printSize:'A4', printStatus:null, printBusy:false
 };
+const printChoices={actual:'Diseño actual',sobria:'Sobria',editorial:'Editorial'};
+const printStorage='boccantina-print-proposals-v2';
+let printAdded=(()=>{try{return JSON.parse(localStorage.getItem(printStorage)||'[]').filter(value=>['sobria','editorial'].includes(value));}catch{return [];}})();
 const content = document.getElementById('view-content');
 const feedback = document.getElementById('feedback');
 const sidebar = document.getElementById('admin-sidebar');
@@ -47,9 +50,10 @@ async function api(path, options = {}) {
     const service = await demoPrint();
     if (options.method === 'POST') {
       const data = JSON.parse(options.body);
-      return service.generate(data.revision, data.language);
+      return service.generate(data.revision, data.language, data.proposal, data.size);
     }
-    return service.status(new URL(path, location.origin).searchParams.get('lang') || 'es');
+    const query=new URL(path,location.origin).searchParams;
+    return service.status(query.get('lang') || 'es',query.get('proposal') || 'actual',query.get('size') || 'A4');
   }
   const headers = { ...(options.headers || {}) };
   if (options.body && !(options.body instanceof Blob)) headers['content-type'] = 'application/json';
@@ -183,21 +187,25 @@ function renderQr() {
   if (value) loadQrArtwork(value, content.querySelector('.qr-section'));
 }
 function renderPrint() {
-  heading('Menú para imprimir', 'Una edición A4 propia de Boccantina, generada con la carta actual.');
+  heading('Menú para imprimir', 'Elige una propuesta y un tamaño antes de generar el PDF.');
   const demo = Boolean(document.querySelector('meta[name="boccantina-demo-base"]'));
   const status = state.printStatus;
-  const editions = status?.editions || [];
+  const editions = (status?.editions || []).filter(edition=>!edition.legacy);
   const language = state.printLanguage;
-  content.innerHTML = `<div class="print-workspace"><div class="print-intro"><h2>Edición para el local</h2><p>La carta física usa los nombres, descripciones, categorías, orden y precios guardados en Productos. Los platos ocultos se excluyen; la disponibilidad temporal no cambia una edición impresa.</p></div>
-    <div class="print-controls"><label>Idioma de la edición<select data-print-language><option value="es" ${language === 'es' ? 'selected' : ''}>Español</option><option value="en" ${language === 'en' ? 'selected' : ''}>English</option></select></label><a class="button" data-preview-print href="/boccantina-preview/imprimir/?lang=${language}" target="_blank" rel="noopener">Vista previa A4 ↗</a>${demo ? '<button class="button" type="button" data-browser-print>Imprimir</button>' : ''}<button class="button button--primary" type="button" data-generate-print ${state.printBusy || !status || status.current ? 'disabled' : ''}>${state.printBusy ? 'Preparando PDF…' : 'Generar PDF actualizado'}</button><button class="button" type="button" data-refresh-print>Actualizar estado</button></div>
-    <p class="print-state" role="status">${!status ? 'Consultando ediciones…' : status.current ? 'El PDF de este idioma coincide con la carta actual.' : `Pendiente de generar: ${status.changes.added} incorporaciones, ${status.changes.changed} cambios y ${status.changes.removed} retiradas desde la última edición.`}</p>
-    ${demo ? '<p class=help>PDF e historial guardados en este navegador. Descarga el archivo para compartirlo o imprimirlo.</p>' : ''}<h3>Historial de ediciones</h3><ul class="print-editions">${editions.length ? editions.map((edition) => `<li><div><strong>${edition.language === 'es' ? 'Español' : 'English'} · revisión ${edition.revision}</strong><span>${escapeHtml(new Date(edition.createdAt).toLocaleString('es-CR'))} · ${escapeHtml(edition.author)}</span><small>${edition.current ? 'Contenido vigente' : 'Edición conservada'}</small></div><a class="button" data-edition="${escapeHtml(edition.id)}" href="/boccantina-preview/api/v2/admin/print/${encodeURIComponent(edition.id)}.pdf">Descargar PDF</a></li>`).join('') : '<li>Aún no hay ediciones archivadas.</li>'}</ul></div>`;
+  const missing=Object.keys(printChoices).filter(value=>value!=='actual'&&!printAdded.includes(value));
+  const active=editions.find(edition=>edition.current);
+  content.innerHTML = `<div class="print-workspace"><div class="print-intro"><h2>Edición para el local</h2><p>Los diseños toman nombres, categorías, orden y precios de la carta guardada. Solo el diseño actual aparece inicialmente; añade alternativas cuando quieras compararlas.</p></div>
+    <div class="print-proposals"><label>Propuesta<select data-print-proposal>${['actual',...printAdded].map(value=>`<option value="${value}" ${state.printProposal===value?'selected':''}>${printChoices[value]}</option>`).join('')}</select></label>${missing.length?`<label>Añadir otra propuesta<select data-print-add-choice>${missing.map(value=>`<option value="${value}">${printChoices[value]}</option>`).join('')}</select></label><button class="button" type="button" data-print-add>+ Añadir propuesta</button>`:''}</div>
+    <div class="print-controls"><label>Tamaño del papel<select data-print-size>${['A4','A3','A2'].map(value=>`<option value="${value}" ${state.printSize===value?'selected':''}>${value} · vertical</option>`).join('')}</select></label><label>Idioma de la edición<select data-print-language><option value="es" ${language === 'es' ? 'selected' : ''}>Español</option><option value="en" ${language === 'en' ? 'selected' : ''}>English</option></select></label><a class="button" data-preview-print href="/boccantina-preview/imprimir/?lang=${language}&proposal=${state.printProposal}&size=${state.printSize}" target="_blank" rel="noopener">Vista previa ↗</a>${demo ? '<button class="button" type="button" data-browser-print>Imprimir</button>' : ''}<button class="button button--primary" type="button" data-generate-print ${state.printBusy || !status || status.current ? 'disabled' : ''}>${state.printBusy ? 'Preparando PDF…' : 'Generar PDF'}</button><button class="button" type="button" data-refresh-print>Actualizar estado</button></div>
+    <p class="print-state" role="status">${!status ? 'Consultando ediciones…' : status.current ? `${printChoices[state.printProposal]} · ${state.printSize} · ${language.toUpperCase()} actualizado.` : `Esta combinación todavía no tiene un PDF vigente. Cambios de contenido: ${status.changes.added} incorporaciones, ${status.changes.changed} cambios y ${status.changes.removed} retiradas.`}</p>
+    ${active?`<a class="button button--primary print-download" data-edition="${escapeHtml(active.id)}" href="/boccantina-preview/api/v2/admin/print/${encodeURIComponent(active.id)}.pdf">Descargar ${printChoices[state.printProposal]} · ${state.printSize} · ${language.toUpperCase()}</a>`:''}
+    ${demo ? '<p class=help>PDF e historial guardados solo en este navegador.</p>' : ''}<details class="print-archive"><summary>Archivo de PDF anteriores</summary><p class="help">Estos archivos pueden contener diseños o datos anteriores. Comparte la descarga de la propuesta seleccionada.</p><ul class="print-editions">${editions.length ? editions.map((edition) => `<li><div><strong>${edition.legacy?'Diseño anterior':printChoices[edition.proposal]||'Propuesta archivada'} · ${edition.size||'tamaño anterior'} · ${edition.language === 'es' ? 'Español' : 'English'}</strong><span>${escapeHtml(new Date(edition.createdAt).toLocaleString('es-CR'))} · ${escapeHtml(edition.author)}</span><small>${edition.current ? 'Selección vigente' : 'Archivo histórico; no compartir como menú actual'}</small></div><a class="button" data-edition="${escapeHtml(edition.id)}" href="/boccantina-preview/api/v2/admin/print/${encodeURIComponent(edition.id)}.pdf">Descargar archivo</a></li>`).join('') : '<li>Aún no hay archivos.</li>'}</ul></details></div>`;
   if(demo)content.querySelectorAll('[data-edition]').forEach(link=>{
     const button=document.createElement('button');button.type='button';button.className=link.className;button.dataset.edition=link.dataset.edition;button.textContent=link.textContent;link.replaceWith(button);
   });
 }
 async function refreshPrint() {
-  state.printStatus = await api(`/api/v2/admin/print/status?lang=${state.printLanguage}`);
+  state.printStatus = await api(`/api/v2/admin/print/status?lang=${state.printLanguage}&proposal=${state.printProposal}&size=${state.printSize}`);
   if (state.view === 'print') renderPrint();
 }
 function render() {
@@ -304,6 +312,8 @@ content.addEventListener('input', (event) => {
 });
 content.addEventListener('change', (event) => {
   if (event.target.matches('[data-print-language]')) { state.printLanguage = event.target.value; refreshPrint().catch((error) => notify(error.message, true)); return; }
+  if (event.target.matches('[data-print-proposal]')) { state.printProposal = event.target.value; state.printStatus=null; refreshPrint().catch((error) => notify(error.message, true)); return; }
+  if (event.target.matches('[data-print-size]')) { state.printSize = event.target.value; state.printStatus=null; refreshPrint().catch((error) => notify(error.message, true)); return; }
   if (event.target.matches('[data-filter]')) { state.filter = event.target.value; content.querySelector('[data-items]').innerHTML = productRows(); return; }
   if (event.target.closest('form')) markDirty();
   if (!event.target.matches('[data-image-upload]')) return;
@@ -330,19 +340,23 @@ content.addEventListener('submit', (event) => {
 });
 content.addEventListener('click', (event) => {
   const target = event.target;
+  if (target.closest('[data-print-add]')) {
+    const value=content.querySelector('[data-print-add-choice]')?.value;
+    if(value&&!printAdded.includes(value)&&printAdded.length<2){printAdded.push(value);localStorage.setItem(printStorage,JSON.stringify(printAdded));state.printProposal=value;state.printStatus=null;refreshPrint().catch(error=>notify(error.message,true));}return;
+  }
   if (document.querySelector('meta[name="boccantina-demo-base"]')) {
     const action = target.closest('[data-preview-print],[data-browser-print],[data-edition]');
     if(action) {
       event.preventDefault();const popup=action.dataset.edition?null:window.open('','_blank');
-      demoPrint().then(service=>action.dataset.edition?service.download(action.dataset.edition):service.preview(state.printLanguage,popup,action.hasAttribute('data-browser-print')))
+      demoPrint().then(service=>action.dataset.edition?service.download(action.dataset.edition):service.preview(state.printLanguage,popup,action.hasAttribute('data-browser-print'),state.printProposal,state.printSize))
         .catch(error=>{popup?.close();notify(error.message,true);});return;
     }
   }
   if (target.closest('[data-refresh-print]')) { refreshPrint().catch((error) => notify(error.message, true)); return; }
   if (target.closest('[data-generate-print]')) {
     state.printBusy = true; renderPrint();
-    api('/boccantina-preview/api/v2/admin/print/editions', { method:'POST', body:JSON.stringify({ revision:state.printStatus?.revision ?? state.catalog.revision, language:state.printLanguage }) })
-      .then(() => refreshPrint()).then(() => notify('PDF actualizado y archivado. Puedes descargarlo en el historial.'))
+    api('/boccantina-preview/api/v2/admin/print/editions', { method:'POST', body:JSON.stringify({ revision:state.printStatus?.revision ?? state.catalog.revision, language:state.printLanguage, proposal:state.printProposal, size:state.printSize }) })
+      .then(() => refreshPrint()).then(() => notify('PDF actualizado. Descárgalo desde la propuesta seleccionada.'))
       .catch((error) => notify(error.message, true)).finally(() => { state.printBusy = false; if (state.view === 'print') renderPrint(); });
     return;
   }
