@@ -1,3 +1,4 @@
+import {inlineBotanicalLayout,inlineBotanicalCss} from './print-botanical-inline.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
@@ -52,16 +53,18 @@ export class PrintMenuV2 {
       const chrome = browserPath();
       if (!chrome) throw Object.assign(new Error('Para generar el PDF instala Chrome o Chromium en este servidor y configura CHROME_EXECUTABLE_PATH.'), { status:503 });
       const edition = { id:randomUUID(), createdAt:new Date().toISOString(), language, ...selection, revision, author, fingerprint:hash, snapshot:printProjection(copy) };
-      let css = await readFile(join(repo, 'preview-src/v2/print.css'), 'utf8');
+      let css = await inlineBotanicalCss(await readFile(join(repo, 'preview-src/v2/print.css'), 'utf8'));
       for (const font of ['assets/fraunces-print.ttf', 'shared-print/vendor/NotoSans-Regular.ttf']) {
         css = css.replace(`./${font}`, `data:font/ttf;base64,${(await readFile(join(repo, 'preview-src/v2', font))).toString('base64')}`);
       }
-      const layoutSource=(await readFile(join(repo, 'preview-src/v2/print-layout.js'),'utf8')).replace("import {normalizePrintDesign} from './shared-print/design.js';",await readFile(join(repo,'preview-src/v2/shared-print/design.js'),'utf8'));
+      const layoutSource=(await inlineBotanicalLayout(await readFile(join(repo, 'preview-src/v2/print-layout.js'),'utf8'))).replace("import {normalizePrintDesign} from './shared-print/design.js';",await readFile(join(repo,'preview-src/v2/shared-print/design.js'),'utf8'));
       const layoutModule = `data:text/javascript;base64,${Buffer.from(layoutSource).toString('base64')}`;
       const logo = await readFile(join(repo, 'snapshot/boccantina.com/preview/assets/boccantina-logo-transparent.png'));
       const texture = await readFile(join(repo, 'preview-src/v2/assets/print-marble-black.png'));
       const body = renderPrintBody(copy, language, `data:image/png;base64,${logo.toString('base64')}`, edition, `data:image/png;base64,${texture.toString('base64')}`);
       const factor={A4:1,A3:Math.SQRT2,A2:2}[size],paper={A4:['210mm','297mm'],A3:['297mm','420mm'],A2:['420mm','594mm']}[size];
+      if(design?.template==='botanical')paper.reverse();
+      css += `@page{size:${paper.join(' ')};margin:0}`;
       css += size==='A4'?'':`@page{size:${paper.join(' ')};margin:0}@media print{body.print-document{zoom:${factor}}.print-page{width:210mm;height:297mm}}`;
       let browser;
       try {

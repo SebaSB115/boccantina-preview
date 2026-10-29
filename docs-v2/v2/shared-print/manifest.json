@@ -10,8 +10,13 @@
     "vendor/NotoSans-Regular.ttf": "b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5",
     "vendor/NotoSans-SemiBold.ttf": "87a8b90ece1e89746b544e4e086f85a3710e41485a8078f9be874837dfad45d5",
     "vendor/LICENSE-NotoSans.txt": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb",
-    "design.js": "527292a295b5c81b8efcd728e0f9bc81d1babc27e0f96efc7399be3fcdfbeb19",
-    "drafts.js": "59e92d4d87f7ec9369722f7dd1e53dab818956e650e00fd27dcf4bec35e4d343"
+    "design.js": "86b1186a09d9a4e100805e96e7e1309a56ba44071a90fab0c90348a22729609e",
+    "drafts.js": "bac7daaa422a5edb1c575359befc27d3dabdc7a8abe888187d8e8d0ab456b039",
+    "botanical.js": "da5f58f776c90c43bb48a48c3f5ab271bf014123c07fedc01159f2ebb0b51fdc",
+    "botanical.css": "24e4620bc0add73c3099328fd3507839ce73006f42653185136c198b275e4a89",
+    "botanical-definition.js": "89d16d81dff158eda846fd725d61426ab18c0092f16f282166919c4e6e1a776c",
+    "botanical-assets.js": "a482b8cb1ce69e70cf7c8e4cfbbbe668d3244ad6bd558c71d6472b48b7aa51ce",
+    "botanical-serif.ttf": "a36621cfef8dbd37d5fe8ebf3fb73b4bb4ac49e2efbe98c2cc878b55d2f8e755"
   },
   "adaptation": {
     "script": "scripts/sync-print-design.mjs",

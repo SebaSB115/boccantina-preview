@@ -18,6 +18,8 @@ export function normalizePrintDesign(value, brand) {
   if(!['center','left'].includes(result.logoAlign))invalid('Alineación del logotipo no válida.');
   result.ornament=value.ornament ?? defaults.ornament;
   if(typeof result.ornament!=='boolean')invalid('Marco decorativo no válido.');
+  result.template=value.template || "classic";
+  if(!["classic","botanical"].includes(result.template))invalid("Composición de impresión no válida.");
   return result;
 }
 

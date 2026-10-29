@@ -90,8 +90,8 @@ try {
   assert.equal(english.response.status, 201, `${english.json?.error || 'Error de PDF'}\n${stderr}`);
   assert.equal((await call('/api/v2/admin/print/status?lang=en')).json.current, true);
   assert.equal((await call(`/api/v2/admin/print/${english.json.id}.pdf`)).body.subarray(0, 4).toString(), '%PDF');
-  for(const [size,expected,columns] of [['A3',841.89,1],['A2',1190.55,2]]){
-    const proposal='p-'+randomUUID(),design={...printDesignDefaults('boccantina'),columns,margin:columns===1?25:18};
+  for(const [size,expected,columns,template] of [['A4',841.89,2,'botanical'],['A3',841.89,1],['A2',1190.55,2]]){
+    const proposal='p-'+randomUUID(),design={...printDesignDefaults('boccantina'),columns,margin:columns===1?25:18,...(template?{template}: {})};
     const variant=await call('/api/v2/admin/print/editions','POST',{revision:changed.json.catalog.revision,language:'es',proposal,size,design});
     assert.equal(variant.response.status,201,variant.json?.error);
     const variantPdf=await call(`/api/v2/admin/print/${variant.json.id}.pdf`);

@@ -1,3 +1,4 @@
+@import url('./shared-print/botanical.css');
 @font-face{font-family:PrintSerif;src:url('./assets/fraunces-print.ttf') format('truetype');font-weight:400;font-display:block}
 @font-face{font-family:PrintSans;src:url('./shared-print/vendor/NotoSans-Regular.ttf') format('truetype');font-weight:400;font-display:block}
 @page{size:A4;margin:0}

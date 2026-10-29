@@ -23,8 +23,9 @@ try {
     catalog = await response.json();
   }
   root.innerHTML = renderPrintBody(catalog, language, `${base}/preview/assets/boccantina-logo-transparent.png`, selection);
+  if(selection.design?.template==='botanical'){const style=document.createElement('style');style.textContent=`@page{size:${size} landscape;margin:0}`;document.head.append(style);}
   if(size!=='A4'){
-    const factor={A3:Math.SQRT2,A2:2}[size],paper={A3:'297mm 420mm',A2:'420mm 594mm'}[size],style=document.createElement('style');
+    const factor={A3:Math.SQRT2,A2:2}[size],paper=selection.design?.template==='botanical'?`${size} landscape`:{A3:'297mm 420mm',A2:'420mm 594mm'}[size],style=document.createElement('style');
     style.textContent=`@page{size:${paper};margin:0}@media print{body.print-document{zoom:${factor}}.print-page{width:210mm;height:297mm}}`;
     document.head.append(style);
   }

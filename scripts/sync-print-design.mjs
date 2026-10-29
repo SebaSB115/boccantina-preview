@@ -8,6 +8,8 @@ const hash = value => createHash('sha256').update(value).digest('hex');
 const upstream = await readFile(source, 'utf8');
 const designSource=await readFile(resolve(repo,'../isabellas-menu-preview-a/preview-a/shared-print/design.js'),'utf8');
 const draftsSource=await readFile(resolve(repo,'../isabellas-menu-preview-a/preview-a/shared-print/drafts.js'),'utf8');
+const botanicalFiles=['botanical.js','botanical.css','botanical-definition.js','botanical-assets.js','botanical-serif.ttf'];
+const botanicalSources=Object.fromEntries(await Promise.all(botanicalFiles.map(async file=>[file,await readFile(resolve(repo,'../isabellas-menu-preview-a/preview-a/shared-print',file))])));
 let engine = upstream;
 function replace(from, to) {
   if (engine.split(from).length !== 2) throw new Error('El motor compartido cambió. Revisa la adaptación antes de sincronizar.');
@@ -22,6 +24,7 @@ manifest.adaptation = {script:'scripts/sync-print-design.mjs',upstreamSha256:has
 manifest.files['engine.js'] = hash(engine);
 manifest.files['design.js'] = hash(designSource);
 manifest.files['drafts.js'] = hash(draftsSource);
+for(const [file,bytes] of Object.entries(botanicalSources))manifest.files[file]=hash(bytes);
 if (process.argv.includes('--check')) {
   if (await readFile(resolve(destination, 'engine.js'), 'utf8') !== engine) throw new Error('Ejecuta node scripts/sync-print-design.mjs para actualizar el adaptador de impresión.');
   for (const [file, checksum] of Object.entries(manifest.files)) {
@@ -32,6 +35,7 @@ if (process.argv.includes('--check')) {
   await writeFile(resolve(destination, 'engine.js'), engine);
   await writeFile(resolve(destination, 'design.js'), designSource);
   await writeFile(resolve(destination, 'drafts.js'), draftsSource);
+  for(const [file,bytes] of Object.entries(botanicalSources))await writeFile(resolve(destination,file),bytes);
   await writeFile(resolve(destination, 'manifest.json'), JSON.stringify(manifest, null, 2)+'\n');
   console.log('Adaptación reproducible de impresión actualizada; fuente de Isabella intacta.');
 }

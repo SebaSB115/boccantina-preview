@@ -1,3 +1,4 @@
+import {renderBotanical,paginateBotanical,fitBotanical} from './shared-print/botanical.js';
 // Shared paper composition. Both PDF engines use these measured pages.
 import {normalizePrintDesign} from './shared-print/design.js';
 export const PRINT_DESIGN_VERSION = 'boccantina-gold-2';
@@ -40,6 +41,7 @@ function productMarkup(item, en) {
 export function renderPrintBody(catalog, language = 'es', logo = new URL('../preview/assets/boccantina-logo-transparent.png', import.meta.url).href, edition = {}, texture = new URL('./assets/print-marble-black.png', import.meta.url).href) {
   if (!['es', 'en'].includes(language)) throw new Error('Idioma de impresión no válido.');
   const en = language === 'en', groups = printProjection(catalog);
+  if(edition.design?.template==='botanical')return renderBotanical({...edition,language,groups:groups.map(g=>({id:g.id,title:en?g.en||g.es:g.es,items:g.products.map(i=>({id:i.id,name:en?i.nameEn||i.nameEs:i.nameEs,description:en?i.descEn||i.descEs:i.descEs,price:i.price,options:[]}))}))},'boccantina',logo);
   const design=edition.design?normalizePrintDesign(edition.design,'boccantina'):null;
   const style=design?` style="--print-columns:${design.columns};--print-margin:${design.margin}mm;--print-gap:${design.gutter}mm;--print-logo:${design.logoWidth}mm;--print-title:${design.titleSize}pt;--print-body:${design.bodySize}pt;--print-item-gap:${design.itemSpacing}mm;--print-logo-align:${design.logoAlign==='left'?'flex-start':'center'}"`:'';
   const date = edition.createdAt ? new Date(edition.createdAt).toLocaleDateString(en ? 'en-US' : 'es-CR') : (en ? 'Preview' : 'Vista previa');
@@ -58,6 +60,7 @@ export function renderPrintBody(catalog, language = 'es', logo = new URL('../pre
 // Measure at A4 size regardless of the preview viewport. Long descriptions
 // continue on the next column instead of being clipped or dropped.
 export async function paginatePrint(menu) {
+  if(menu.classList.contains("botanical-menu"))return paginateBotanical(menu);
   await Promise.all([document.fonts.load('16px PrintSerif'), document.fonts.load('16px PrintSans')]);
   const source = menu.querySelector('[data-print-source]'), paper = menu.querySelector('[data-print-paper]');
   menu.querySelectorAll('.print-page').forEach(page => page.remove());
@@ -131,6 +134,7 @@ export async function paginatePrint(menu) {
 }
 
 export function fitPrintPreview(menu) {
+  if(menu.classList.contains("botanical-menu"))return fitBotanical(menu);
   const update = () => {
     const paper = menu.querySelector('.print-sheet'); if (!paper) return;
     menu.style.setProperty('--paper-scale', Math.min(1, menu.clientWidth / paper.offsetWidth));

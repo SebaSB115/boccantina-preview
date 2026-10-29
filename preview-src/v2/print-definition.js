@@ -1,3 +1,4 @@
+import {createBotanicalDefinition} from './shared-print/botanical-definition.js';
 import {renderPrintBody, paginatePrint, paperArtwork} from './print-layout.js';
 
 let stylesheet;
@@ -49,6 +50,7 @@ function linesOf(element, sheet) {
 }
 
 export async function createPrintDefinition(snapshot, edition, logo, pdf) {
+  if(snapshot.design?.template==='botanical')return createBotanicalDefinition(snapshot,edition,logo,pdf,'boccantina');
   await loadStyles();
   const response = await fetch(new URL('./assets/print-marble-black.png', import.meta.url));
   if (!response.ok) throw new Error('No se pudo cargar el fondo del menú impreso.');
